@@ -2,9 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <title>boo</title>
+
+    <script>
+      (function () {
+        const theme = localStorage.getItem('theme');
+        const root = document.documentElement;
+
+        if (theme === 'dark') {
+          root.setAttribute('data-theme', 'dark');
+          document.write(
+            '<style>html,body{background-color:#121212;color:white;}</style>'
+          );
+        } else {
+          root.setAttribute('data-theme', 'light');
+          document.write(
+            '<style>html,body{background-color:#ffffff;color:black;}</style>'
+          );
+        }
+      })();
+    </script>
+
+
   </head>
   <body>
     <div id="root"></div>

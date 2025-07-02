@@ -1,0 +1,26 @@
+
+/* === LIGHT THEME === */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #0a0a0a;
+  --primary-color: #007BFF;      
+  --secondary-color: #e6f0ff;      
+  --card-bg: #f5faff;
+}
+
+/* === DARK THEME === */
+[data-theme='dark'] {
+  --bg-color: #121a2c;           
+  --text-color: #f1f1f1;
+  --primary-color: #4eaaff;     
+  --secondary-color: #1c263b;      
+  --card-bg: #1a2333;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  transition: background-color 0.2s, color 0.2s;
+}

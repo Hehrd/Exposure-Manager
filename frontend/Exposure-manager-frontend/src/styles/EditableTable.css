@@ -1,0 +1,142 @@
+/* === EditableTable.css === */
+
+.table-container {
+  max-width: 800px;
+  margin: 5rem auto;
+  padding: 2rem;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table-heading {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.save-button {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.save-button:hover {
+  opacity: 0.9;
+}
+
+
+
+.tabulator {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--primary-color);
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  border-spacing: 0;
+}
+
+.tabulator .tabulator-header {
+  background-color: var(--secondary-color) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--primary-color);
+}
+
+.tabulator .tabulator-col,
+.tabulator .tabulator-col-title {
+  background-color: var(--secondary-color) !important;
+  color: var(--text-color) !important;
+  font-weight: bold;
+}
+
+.tabulator .tabulator-cell,
+.tabulator .tabulator-col {
+  border-right: 2px solid var(--primary-color);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+
+.tabulator .tabulator-row:hover {
+  background-color: var(--card-bg);
+}
+
+
+.tabulator input {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--primary-color);
+  padding: 0.4rem;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+
+.tabulator-cell {
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  font-weight: normal;
+  line-height: 1.5;
+  letter-spacing: normal;
+  white-space: pre-wrap !important;
+  word-break: break-word;
+  vertical-align: top;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+
+.tabulator-editing {
+  position: relative;
+  padding: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.tabulator-editing textarea {
+  width: 100% !important;
+  padding: 4px !important;
+  margin: 0 !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+
+
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+
+  font-family: 'Segoe UI', sans-serif !important;
+  font-size: 0.95rem !important;
+  font-weight: normal !important;
+  line-height: 1.5 !important;
+  letter-spacing: normal !important;
+
+  vertical-align: top !important;
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  box-sizing: border-box !important;
+}
+
+.tabulator-editing textarea {
+  outline: none !important;
+  box-shadow: none !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+
+}
+
+
+.tabulator-editing:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+}
+

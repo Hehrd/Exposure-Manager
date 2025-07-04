@@ -1,3 +1,4 @@
+// src/components/EditableTable.tsx
 import { useEffect, useRef, useContext } from "react";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ThemeContext } from "../context/ThemeContext";
@@ -16,7 +17,7 @@ const EditableTable = () => {
     age: 20 + (i % 10),
     bio:
       i === 4
-        ? "This is an extremely long biography meant to test whether the bio column can wrap instead of expanding. It should not cause the table to stretch beyond the screen width. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in lacus at erat sagittis commodo nec nec justo."
+        ? "This is an extremely long biography meant to test whether the bio column can wrap instead of expanding. It should not cause the table to stretch a lot. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in lacus at erat sagittis commodo nec nec justo."
         : "Short bio",
   }));
 
@@ -29,7 +30,7 @@ const EditableTable = () => {
       tableInstance.current = new Tabulator(tableRef.current, {
         data,
         layout: "fitData",
-        height: "500px",
+        height: "70vh",
         reactiveData: true,
         responsiveLayout: false,
         columns: [
@@ -53,13 +54,13 @@ const EditableTable = () => {
                   resize: vertical;
                   box-sizing: border-box;
                   font-family: 'Segoe UI', sans-serif;
-                  font-size: 0.95rem;
+                  font-size: 0.9rem;
                   font-weight: normal;
                   line-height: 1.5;
                   letter-spacing: normal;
                   white-space: pre-wrap;
                   word-break: break-word;
-                  padding: 4px;
+                  padding: 2px;
                   margin: 0;
                   border: none;
                   outline: none;

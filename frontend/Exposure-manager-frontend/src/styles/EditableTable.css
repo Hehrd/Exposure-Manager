@@ -1,8 +1,10 @@
 /* === EditableTable.css === */
 
 .table-container {
-  max-width: 800px;
-  margin: 5rem auto;
+  max-width: 88%;
+  margin-top: 5%;
+  margin-bottom: 5%;
+  margin: auto;
   padding: 2rem;
   background-color: var(--card-bg);
   color: var(--text-color);
@@ -131,6 +133,7 @@
   box-shadow: none !important;
   transform: translateZ(0);
   backface-visibility: hidden;
+
 
 }
 

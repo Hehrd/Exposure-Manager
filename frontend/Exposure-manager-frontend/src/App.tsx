@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
-import EditableTable from './components/EditableTable';
+import TablePage from './pages/TablePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastContainer } from 'react-toastify';
 import { useContext } from 'react';
@@ -17,12 +17,11 @@ function App() {
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <ThemeToggle />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/table" element={<EditableTable />} />
+        <Route path="/table" element={<TablePage />} />
         <Route
           path="/dashboard"
           element={

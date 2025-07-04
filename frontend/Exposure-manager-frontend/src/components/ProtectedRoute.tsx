@@ -10,20 +10,16 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children }: Props) {
-  const { user, justLoggedOut } = useAuth();
+  const { user } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
-    if (!user && !justLoggedOut) {
+    if (!user) {
       toast.warning('Please log in to see this page');
       const timeout = setTimeout(() => setShouldRedirect(true), 10);
       return () => clearTimeout(timeout);
     }
-
-    if (!user && justLoggedOut) {
-      setShouldRedirect(true);
-    }
-  }, [user, justLoggedOut]);
+  }, [user]);
 
   if (!user && shouldRedirect) return <Navigate to="/login" />;
   if (!user) return null;

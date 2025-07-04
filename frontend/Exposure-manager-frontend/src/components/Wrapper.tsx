@@ -1,4 +1,5 @@
-import { ReactNode, useState, useRef, useEffect } from 'react';
+import {  useState, useRef, useEffect } from 'react';
+import type {ReactNode} from 'react'
 import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/Wrapper.css';
 import ThemeToggle from './ThemeToggle';

@@ -1,119 +1,171 @@
-// src/components/EditableTable.tsx
-import { useEffect, useRef, useContext } from "react";
-import { TabulatorFull as Tabulator } from "tabulator-tables";
-import { ThemeContext } from "../context/ThemeContext";
-import "tabulator-tables/dist/css/tabulator.min.css";
-import "../styles/EditableTable.css";
+import { useFetchJson } from '../hooks/useFetchJson';
+// React Grid Logic
+import React, {useMemo, useState } from "react";
 
-const EditableTable = () => {
-  const { theme } = useContext(ThemeContext);
-  const tableRef = useRef<HTMLDivElement | null>(null);
-  const tableInstance = useRef<any>(null);
 
-  const data = Array.from({ length: 20 }, (_, i) => ({
-    id: i + 1,
-    name: `User ${i + 1}`,
-    role: ["Developer", "Designer", "Manager"][i % 3],
-    age: 20 + (i % 10),
-    bio:
-      i === 4
-        ? "This is an extremely long biography meant to test whether the bio column can wrap instead of expanding. It should not cause the table to stretch a lot. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum in lacus at erat sagittis commodo nec nec justo."
-        : "Short bio",
-  }));
+// Theme
+import type {
+  ColDef,
+  RowSelectionOptions,
+  ValueFormatterParams,
+} from "ag-grid-community";
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
+// Core CSS
+import 'ag-grid-enterprise';
+import type { CustomCellRendererProps } from "ag-grid-react";
+import { AgGridReact } from "ag-grid-react";
 
-  useEffect(() => {
-    if (tableInstance.current) {
-      tableInstance.current.destroy();
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+// Custom Cell Renderer (Display logos based on cell value)
+const CompanyLogoRenderer = (params: CustomCellRendererProps) => (
+  <span
+    style={{
+      display: "flex",
+      height: "100%",
+      width: "100%",
+      alignItems: "center",
+    }}
+  >
+    {params.value && (
+      <img
+        alt={`${params.value} Flag`}
+        src={`https://www.ag-grid.com/example-assets/space-company-logos/${params.value.toLowerCase()}.png`}
+        style={{
+          display: "block",
+          width: "25px",
+          height: "auto",
+          maxHeight: "50%",
+          marginRight: "12px",
+          filter: "brightness(1.1)",
+        }}
+      />
+    )}
+    <p
+      style={{
+        textOverflow: "ellipsis",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {params.value}
+    </p>
+  </span>
+);
+
+/* Custom Cell Renderer (Display tick / cross in 'Successful' column) */
+const MissionResultRenderer = (params: CustomCellRendererProps) => (
+  <span
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      height: "100%",
+      alignItems: "center",
+    }}
+  >
+    {
+      <img
+        alt={`${params.value}`}
+        src={`https://www.ag-grid.com/example-assets/icons/${params.value ? "tick-in-circle" : "cross-in-circle"}.png`}
+        style={{ width: "auto", height: "auto" }}
+      />
     }
+  </span>
+);
 
-    if (tableRef.current) {
-      tableInstance.current = new Tabulator(tableRef.current, {
-        data,
-        layout: "fitData",
-        height: "70vh",
-        reactiveData: true,
-        responsiveLayout: false,
-        columns: [
-          { title: "ID", field: "id", width: 60, editor: false },
-          { title: "Name", field: "name", editor: "input", width: 150 },
-          { title: "Role", field: "role", editor: "input", width: 150 },
-          { title: "Age", field: "age", editor: "number", width: 80 },
-          {
-            title: "Bio",
-            field: "bio",
-            editor: "textarea",
-            formatter: "textarea",
-            minWidth: 150,
-            maxWidth: 600,
-            widthGrow: 3,
-            editorParams: {
-              elementAttributes: {
-                style: `
-                  width: 100%;
-                  display: block;
-                  resize: vertical;
-                  box-sizing: border-box;
-                  font-family: 'Segoe UI', sans-serif;
-                  font-size: 0.9rem;
-                  font-weight: normal;
-                  line-height: 1.5;
-                  letter-spacing: normal;
-                  white-space: pre-wrap;
-                  word-break: break-word;
-                  padding: 2px;
-                  margin: 0;
-                  border: none;
-                  outline: none;
-                  background-color: var(--bg-color);
-                  color: var(--text-color);
-                  vertical-align: top;
-                `,
-              },
-            },
-          },
-        ],
-      });
+/* Format Date Cells */
+const dateFormatter = (params: ValueFormatterParams): string => {
+  return new Date(params.value).toLocaleDateString("en-us", {
+    weekday: "long",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
 
-      tableInstance.current.on("cellEditing", (cell: any) => {
-        const input = cell.getElement().querySelector("textarea") as HTMLTextAreaElement | null;
-        if (!input) return;
+// Row Data Interface
+interface IRow {
+  mission: string;
+  company: string;
+  location: string;
+  date: string;
+  time: string;
+  rocket: string;
+  price: number;
+  successful: boolean;
+}
 
-        const cellElement = cell.getElement();
-        const computed = getComputedStyle(input);
-        const paddingTop = parseFloat(computed.paddingTop || "0");
-        const paddingBottom = parseFloat(computed.paddingBottom || "0");
+const rowSelection: RowSelectionOptions = {
+  mode: "multiRow",
+  headerCheckbox: false,
+};
 
-        const exactHeight = Math.floor(cellElement.clientHeight - paddingTop - paddingBottom);
-        input.style.height = `${exactHeight}px`;
+// Create new GridExample component
+const GridExample = () => {
+  // Row Data: The data to be displayed.
+  const { data, loading } = useFetchJson<IRow>(
+    "https://www.ag-grid.com/example-assets/space-mission-data.json",
+  );
 
-        const resizeHandler = () => {
-          input.style.height = "auto";
-          input.style.height = input.scrollHeight + "px";
-        };
+  // Column Definitions: Defines & controls grid columns.
+  const [colDefs] = useState<ColDef[]>([
+    {
+      field: "mission",
+      width: 150,
+    },
+    {
+      field: "company",
+      width: 130,
+      cellRenderer: CompanyLogoRenderer,
+    },
+    {
+      field: "location",
+      width: 225,
+    },
+    {
+      field: "date",
+      valueFormatter: dateFormatter,
+    },
+    {
+      field: "price",
+      width: 130,
+      valueFormatter: (params: ValueFormatterParams) => {
+        return "£" + params.value.toLocaleString();
+      },
+    },
+    {
+      field: "successful",
+      width: 120,
+      cellRenderer: MissionResultRenderer,
+    },
+    { field: "rocket" },
+  ]);
 
-        input.addEventListener("input", resizeHandler);
+  // Apply settings across all columns
+  const defaultColDef = useMemo<ColDef>(() => {
+    return {
+      filter: true,
+      editable: true,
+    };
+  }, []);
 
-        tableInstance.current?.on("cellEdited", () => {
-          input?.removeEventListener("input", resizeHandler);
-        });
-      });
-    }
-  }, [theme]);
-
-  const handleSave = () => {
-    const updatedData = tableInstance.current?.getData();
-    console.log("Saving data:", updatedData);
-  };
-
+  // Container: Defines the grid's theme & dimensions.
   return (
-    <div className="table-container">
-      <h2 className="table-heading">Editable Team Table</h2>
-      <div ref={tableRef} />
-      <button className="save-button" onClick={handleSave}>
-        Save Changes
-      </button>
+    <div style={{ width: "100%", height: "100%" }}>
+      <AgGridReact
+        rowData={data}
+        loading={loading}
+        columnDefs={colDefs}
+        defaultColDef={defaultColDef}
+        pagination={true}
+        rowSelection={rowSelection}
+        onSelectionChanged={(event) => console.log("Row Selected!")}
+        onCellValueChanged={(event) =>
+          console.log(`New Cell Value: ${event.value}`)
+        }
+      />
     </div>
   );
 };
 
-export default EditableTable;
+export default GridExample

@@ -16,7 +16,7 @@ function App() {
   const { theme } = useContext(ThemeContext);
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ height: '100%' }}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

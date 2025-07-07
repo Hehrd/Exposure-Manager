@@ -5,7 +5,7 @@ import AppWrapper from '../components/Wrapper';
 const TablePage = () => {
   return (
     <AppWrapper>
-      <div style={{ height: '100%' }}>
+      <div style={{ height: 'fit-content'}}>
         <EditableTable />
       </div>
     </AppWrapper>

@@ -78,6 +78,7 @@
 
 .main-content {
   padding: 2rem;
+  height: fit-content;
   flex-grow: 1;
    min-height: 0;
 }

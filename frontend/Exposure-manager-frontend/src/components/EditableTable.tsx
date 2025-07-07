@@ -9,11 +9,13 @@ import type {
   RowSelectionOptions,
   ValueFormatterParams,
 } from "ag-grid-community";
-import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
+import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
 // Core CSS
 import 'ag-grid-enterprise';
 import type { CustomCellRendererProps } from "ag-grid-react";
 import { AgGridReact } from "ag-grid-react";
+//import 'ag-grid-community/styles/ag-grid.css';
+
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -151,8 +153,9 @@ const GridExample = () => {
 
   // Container: Defines the grid's theme & dimensions.
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div id="custom-grid-wrapper" style={{ width: "100%", height: "95vh" }}>
       <AgGridReact
+        theme={themeQuartz}
         rowData={data}
         loading={loading}
         columnDefs={colDefs}

@@ -71,3 +71,49 @@ body {
 .auth-form button:hover {
   opacity: 0.9;
 }
+
+
+#custom-grid-wrapper .ag-root-wrapper {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+
+/* Header */
+#custom-grid-wrapper .ag-header {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+}
+
+/* Cells */
+#custom-grid-wrapper .ag-cell {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+.ag-cell[aria-colindex="1"] {
+  border-left-color: var(--primary-color) !important;
+  border-right-color: var(--primary-color);
+}
+.ag-cell{
+  border-right-color: var(--primary-color);
+}
+.ag-row[aria-rowindex="0"]{
+  border-top-color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+.ag-row{
+  border-bottom-color: var(--primary-color);
+}
+/* Hover and selected */
+#custom-grid-wrapper .ag-row-hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+[data-theme="dark"] #custom-grid-wrapper .ag-row-hover {
+  background-color: rgba(78, 170, 255, 0.1);
+}
+
+#custom-grid-wrapper .ag-row-selected {
+  background-color: rgba(0, 123, 255, 0.07);
+}
+[data-theme="dark"] #custom-grid-wrapper .ag-row-selected {
+  background-color: rgba(78, 170, 255, 0.07);
+}

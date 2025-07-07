@@ -14,8 +14,12 @@ html, body {
   font-family: sans-serif;
   transition: background-color 0.2s, color 0.2s;
 }
-html, body, #root {
+html, body {
   height: 100%;
+  margin: 0;
+}
+#root{
+  height: fit-content;
   margin: 0;
 }
 * {

@@ -11,13 +11,13 @@ import "../styles/EditableTable.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-// Custom Types
+
 interface IRow {
   databaseName: string;
   ownerName: string;
 }
 
-// Hardcoded Data
+
 const hardcodedData: IRow[] = [
   { databaseName: "CustomerDB", ownerName: "Alice Smith" },
   { databaseName: "InventoryDB", ownerName: "Bob Johnson" },
@@ -45,7 +45,6 @@ const hardcodedData: IRow[] = [
   { databaseName: "BillingDB", ownerName: "Diana Scott" },
 ];
 
-// Row selection config
 const rowSelection: RowSelectionOptions = {
   mode: "multiRow",
   headerCheckbox: false,
@@ -81,8 +80,6 @@ const GridExample = () => {
         columnDefs={colDefs}
         defaultColDef={defaultColDef}
         pagination={true}
-        // rowSelection={rowSelection}
-        // onSelectionChanged={(event) => console.log("Row Selected!")}
         onCellValueChanged={(event) =>
           console.log(`New Cell Value: ${event.value}`)
         }

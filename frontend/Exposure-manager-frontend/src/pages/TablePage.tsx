@@ -1,6 +1,6 @@
 // src/pages/TablePage.tsx
 import EditableTable from '../components/EditableTable';
-import AppWrapper from '../components/Wrapper';
+import AppWrapper from '../components/AppWrapper';
 
 const TablePage = () => {
   return (

@@ -39,7 +39,7 @@ export default function AppWrapper({ children }: WrapperProps) {
 
   return (
     <div className="bg-[var(--bg-color)] text-[var(--text-color)] min-h-screen flex flex-col w-full">
-      {/* Header */}
+      
       <header className="flex items-center justify-between bg-[var(--secondary-color)] px-8 py-4 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
         <div
           className="font-bold bg-[var(--primary-color)] text-white px-4 py-2 rounded cursor-pointer"
@@ -65,7 +65,7 @@ export default function AppWrapper({ children }: WrapperProps) {
           />
         </div>
 
-        {/* Icons */}
+      
         <div className="relative flex items-center gap-4 text-[1.3rem]">
           <span
             className="cursor-pointer"
@@ -87,12 +87,11 @@ export default function AppWrapper({ children }: WrapperProps) {
         </div>
       </header>
 
-      {/* Breadcrumb */}
+     
       <div className="bg-[var(--card-bg)] text-[var(--text-color)] px-8 py-3 text-[0.95rem] font-medium border-b border-[var(--primary-color)]">
         {currentPath || 'Home'}
       </div>
 
-      {/* Main Content */}
       <main className="p-8 flex-grow h-fit min-h-0">
         {children}
       </main>

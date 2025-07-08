@@ -36,30 +36,45 @@ export default function Signup() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="auth-form">
-      <h2>Sign Up</h2>
+    <form
+      onSubmit={handleSubmit}
+      className="bg-[var(--card-bg)] text-[var(--text-color)] max-w-[400px] mx-auto p-8 rounded-[8px] shadow-[0_4px_10px_rgba(0,0,0,0.1)]"
+    >
+      <h2 className="text-center mb-6 text-[var(--primary-color)]">Sign Up</h2>
+
       <input
         type="text"
         placeholder="Username"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         required
+        className="w-full p-3 mb-4 border border-[var(--primary-color)] rounded-[4px] bg-[var(--bg-color)] text-[var(--text-color)] placeholder:text-[#aaa] box-border"
       />
+
       <input
         type="password"
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
+        className="w-full p-3 mb-4 border border-[var(--primary-color)] rounded-[4px] bg-[var(--bg-color)] text-[var(--text-color)] placeholder:text-[#aaa] box-border"
       />
+
       <input
         type="password"
         placeholder="Confirm Password"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
         required
+        className="w-full p-3 mb-4 border border-[var(--primary-color)] rounded-[4px] bg-[var(--bg-color)] text-[var(--text-color)] placeholder:text-[#aaa] box-border"
       />
-      <button type="submit">Sign Up</button>
+
+      <button
+        type="submit"
+        className="w-full p-3 bg-[var(--primary-color)] text-white border-none rounded-[4px] font-bold cursor-pointer hover:opacity-90"
+      >
+        Sign Up
+      </button>
     </form>
   );
 }

@@ -16,7 +16,7 @@ function App() {
   const { theme } = useContext(ThemeContext);
 
   return (
-    <div style={{ height: '100%' }}>
+    <div style={{ height: 'fit-content', minHeight: '100vh', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center' }}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

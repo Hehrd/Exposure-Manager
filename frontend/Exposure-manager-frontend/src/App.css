@@ -6,6 +6,8 @@
   --primary-color: #007BFF;      
   --secondary-color: #e6f0ff;      
   --card-bg: #f5faff;
+  --search-filter: brightness(0) saturate(100%) invert(41%) sepia(78%) saturate(1342%) hue-rotate(189deg) brightness(98%) contrast(96%);
+
 }
 
 /* === DARK THEME === */
@@ -15,105 +17,9 @@
   --primary-color: #4eaaff;     
   --secondary-color: #1c263b;      
   --card-bg: #1a2333;
-}
+  --search-filter: brightness(0) saturate(100%) invert(79%) sepia(96%) saturate(368%) hue-rotate(175deg) brightness(103%) contrast(97%);
 
-body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.auth-form {
-  background-color: var(--card-bg);
-  color: var(--text-color);
-  max-width: 400px;
-  margin: 5rem auto;
-  padding: 2rem;                /* ✅ Equal padding all around */
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.auth-form input {
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  border: 1px solid var(--primary-color);
-  border-radius: 4px;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  box-sizing: border-box;      /* ✅ Prevent overflow */
-}
-
-.auth-form h2 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: var(--primary-color);
 }
 
 
-.auth-form input::placeholder {
-  color: #aaa;
-}
 
-.auth-form button {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.auth-form button:hover {
-  opacity: 0.9;
-}
-
-
-#custom-grid-wrapper .ag-root-wrapper {
-  background-color: var(--card-bg);
-  color: var(--text-color);
-}
-
-/* Header */
-#custom-grid-wrapper .ag-header {
-  background-color: var(--secondary-color);
-  color: var(--text-color);
-}
-
-/* Cells */
-#custom-grid-wrapper .ag-cell {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-}
-.ag-cell[aria-colindex="1"] {
-  border-left-color: var(--primary-color) !important;
-  border-right-color: var(--primary-color);
-}
-.ag-cell{
-  border-right-color: var(--primary-color);
-}
-.ag-row[aria-rowindex="0"]{
-  border-top-color: var(--primary-color);
-  border-bottom-color: var(--primary-color);
-}
-.ag-row{
-  border-bottom-color: var(--primary-color);
-}
-/* Hover and selected */
-#custom-grid-wrapper .ag-row-hover {
-  background-color: rgba(0, 123, 255, 0.1);
-}
-[data-theme="dark"] #custom-grid-wrapper .ag-row-hover {
-  background-color: rgba(78, 170, 255, 0.1);
-}
-
-#custom-grid-wrapper .ag-row-selected {
-  background-color: rgba(0, 123, 255, 0.07);
-}
-[data-theme="dark"] #custom-grid-wrapper .ag-row-selected {
-  background-color: rgba(78, 170, 255, 0.07);
-}

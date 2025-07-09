@@ -1,5 +1,4 @@
-// PolicyPage.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { ColDef, ValueFormatterParams } from "ag-grid-community";
 import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
@@ -7,6 +6,7 @@ import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
 import AppWrapper from "../components/AppWrapper";
+import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -44,6 +44,8 @@ const policyData: PolicyRow[] = [
 
 const PolicyPage = () => {
   const { policyId } = useParams();
+  const gridRef = useRef<AgGridReact<any>>(null);
+  useClickOutsideToStopEditing(gridRef);
 
   const [colDefs] = useState<ColDef<PolicyRow>[]>([
     { field: "name", headerName: "Policy Name", flex: 2, editable: true },
@@ -70,10 +72,13 @@ const PolicyPage = () => {
     <AppWrapper>
       <div id="custom-grid-wrapper" style={{ width: "100%", height: "95vh" }}>
         <AgGridReact
+          ref={gridRef}
           className="ag-theme-quartz"
           rowData={policyData}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
+          columnHoverHighlight={false}
+          suppressRowHoverHighlight={true}
           pagination={true}
         />
       </div>

@@ -1,12 +1,16 @@
-// LocationPage.tsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { ColDef } from "ag-grid-community";
-import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
+import {
+  AllCommunityModule,
+  ModuleRegistry,
+  themeQuartz,
+} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
 import AppWrapper from "../components/AppWrapper";
+import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -25,7 +29,10 @@ const locationData: LocationRow[] = [
 ];
 
 const LocationPage = () => {
+  const gridRef = useRef<AgGridReact<any>>(null);
   const { locationId } = useParams();
+
+  useClickOutsideToStopEditing(gridRef);
 
   const [colDefs] = useState<ColDef<LocationRow>[]>([
     { field: "name", headerName: "Name", flex: 1, editable: true },
@@ -45,10 +52,13 @@ const LocationPage = () => {
     <AppWrapper>
       <div id="custom-grid-wrapper" style={{ width: "100%", height: "95vh" }}>
         <AgGridReact
+          ref={gridRef}
           className="ag-theme-quartz"
           rowData={locationData}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
+          columnHoverHighlight={false}
+          suppressRowHoverHighlight={true}
           pagination={true}
         />
       </div>

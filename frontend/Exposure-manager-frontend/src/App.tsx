@@ -12,6 +12,7 @@ import PortfolioPage from './pages/PortfolioPage';
 import LocationsAndPoliciesPage from './pages/LocationsAndPoliciesPage';
 import LocationPage from './pages/LocationPage';
 import PolicyPage from './pages/PolicyPage';
+import SettingsPage from './pages/SettingsPage';
 import { ToastContainer } from 'react-toastify';
 import { useContext } from 'react';
 import { ThemeContext } from './context/ThemeContext';
@@ -38,6 +39,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/table" element={<TablePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
 
         <Route
           path="/dashboard"

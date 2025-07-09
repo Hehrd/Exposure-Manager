@@ -64,6 +64,8 @@ const AccountPage = () => {
           rowData={hardcodedData}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
+          columnHoverHighlight={false}
+          suppressRowHoverHighlight={true}
           pagination={true}
         />
       </div>

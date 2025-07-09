@@ -1,6 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect, ReactNode } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import LogoutButton from './LogoutButton';
 
@@ -8,15 +7,42 @@ interface WrapperProps {
   children: ReactNode;
 }
 
-const parseBreadcrumb = (pathname: string) => {
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const generateBreadcrumbLinks = (pathname: string) => {
   const segments = pathname.split('/').filter(Boolean);
-  return segments.join(' > ');
+  const paths: string[] = [];
+
+  return segments.map((segment, index) => {
+    const decoded = decodeURIComponent(segment);
+    paths.push(segment);
+    const to = '/' + paths.join('/');
+
+    const label = capitalize(decoded);
+    const isClickable = index % 2 === 1; // odd indices are values
+
+    return (
+      <span key={index}>
+        {index > 0 && <span className="mx-1">{'>'}</span>}
+        {isClickable ? (
+          <Link
+            to={to}
+            className="text-[var(--primary-color)] hover:underline underline-offset-2 transition-all"
+          >
+            {label}
+          </Link>
+        ) : (
+          <span className="text-[var(--text-color)]">{label}</span>
+        )}
+      </span>
+    );
+  });
 };
+
 
 export default function AppWrapper({ children }: WrapperProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const currentPath = parseBreadcrumb(location.pathname);
 
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -41,20 +67,16 @@ export default function AppWrapper({ children }: WrapperProps) {
     <div className="bg-[var(--bg-color)] text-[var(--text-color)] min-h-screen flex flex-col w-full">
       
       <header className="flex items-center justify-between bg-[var(--secondary-color)] px-8 py-4 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
-        <div
-          className="font-bold bg-[var(--primary-color)] text-white px-4 py-2 rounded cursor-pointer"
-          role="button"
-          tabIndex={0}
-          onClick={() => navigate('/')}
-          onKeyDown={(e) => e.key === 'Enter' && navigate('/')}
+        <Link
+          to="/"
+          className="font-bold bg-[var(--primary-color)] text-[var(--text-color)] px-4 py-2 rounded cursor-pointer"
         >
           <b>
             <span>Exposure</span><br />
             <span>Manager</span>
           </b>
-        </div>
+        </Link>
 
-        {/* Search Bar */}
         <div className="flex items-center bg-[var(--bg-color)] border border-[var(--primary-color)] px-2 py-1 rounded w-[300px]">
           <span className="text-[var(--primary-color)] mr-2 text-sm">🔍</span>
           <input
@@ -65,7 +87,6 @@ export default function AppWrapper({ children }: WrapperProps) {
           />
         </div>
 
-      
         <div className="relative flex items-center gap-4 text-[1.3rem]">
           <span
             className="cursor-pointer"
@@ -80,16 +101,25 @@ export default function AppWrapper({ children }: WrapperProps) {
               ref={profileRef}
               className="absolute top-[120%] right-0 w-[220px] min-h-[120px] bg-[var(--card-bg)] text-[var(--text-color)] border border-[var(--primary-color)] rounded-lg p-4 shadow-[0_4px_12px_rgba(0,0,0,0.2)] z-[1000] flex flex-col gap-3"
             >
-              <ThemeToggle />
+              <button
+                onClick={() => {
+                  setProfileOpen(false);
+                  navigate('/settings');
+                }}
+                className="w-full text-left text-sm flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary-color)] text-[var(--text-color)] hover:opacity-90 transition-all"
+              >
+                Settings
+              </button>
+
               <LogoutButton />
             </div>
           )}
+
         </div>
       </header>
 
-     
       <div className="bg-[var(--card-bg)] text-[var(--text-color)] px-8 py-3 text-[0.95rem] font-medium border-b border-[var(--primary-color)]">
-        {currentPath || 'Home'}
+        {generateBreadcrumbLinks(location.pathname) || 'Home'}
       </div>
 
       <main className="p-8 flex-grow h-fit min-h-0">

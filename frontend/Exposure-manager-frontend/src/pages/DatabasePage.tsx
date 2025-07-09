@@ -60,6 +60,8 @@ const Home = () => {
     <AppWrapper>
       <div id="custom-grid-wrapper" style={{ width: "100%", height: "95vh" }}>
         <AgGridReact
+          columnHoverHighlight={false}
+          suppressRowHoverHighlight={true}
           theme={themeQuartz}
           rowData={hardcodedData}
           columnDefs={colDefs}

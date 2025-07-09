@@ -68,6 +68,8 @@ const DatabasePage = () => {
           defaultColDef={defaultColDef}
           pagination={true}
           suppressClickEdit={true}
+          columnHoverHighlight={false}
+          suppressRowHoverHighlight={true}
           readOnlyEdit={true}
         />
       </div>

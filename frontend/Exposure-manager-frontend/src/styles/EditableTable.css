@@ -97,3 +97,10 @@
   background-color: var(--card-bg);
   color: var(--text-color);
 }
+.ag-menu{
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+}
+.ag-paging-panel{
+  border-color: var(--primary-color);
+}

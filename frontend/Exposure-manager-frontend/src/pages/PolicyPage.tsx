@@ -12,6 +12,7 @@ import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
 import AppWrapper from "../components/AppWrapper";
+import TableToolbar from "../components/TableToolbar";
 import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 import type { PolicyRow } from "../types/PolicyRow";
 
@@ -93,25 +94,11 @@ const PolicyPage = () => {
 
   return (
     <AppWrapper>
-      <div className="px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-semibold text-[var(--primary-color)] ">
-          {tableName}
-        </h1>
-        
-          <button
-            onClick={handleRefresh}
-            className="px-4 w-1/4 py-2 bg-[var(--primary-color)] text-[var(--text-color)] rounded hover:bg-blue-700 transition"
-          >
-            Refresh
-          </button>
-          <button
-            onClick={handleSaveChanges}
-            className="px-4 w-1/4 py-2 bg-[var(--primary-color)] text-[var(--text-color)] rounded hover:bg-blue-700 transition"
-          >
-            Save Changes
-          </button>
-        
-      </div>
+        <TableToolbar
+            tableName={tableName}
+            onSave={handleSaveChanges}
+            onRefresh={handleRefresh}
+          />
 
       <div id="custom-grid-wrapper" style={{ width: "100%", height: "85vh" }}>
         <AgGridReact

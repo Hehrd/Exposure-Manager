@@ -13,17 +13,17 @@ const generateBreadcrumbLinks = (pathname: string) => {
   const segments = pathname.split('/').filter(Boolean);
   const paths: string[] = [];
 
-  return segments.map((segment, index) => {
+  const items = segments.map((segment, index) => {
     const decoded = decodeURIComponent(segment);
     paths.push(segment);
     const to = '/' + paths.join('/');
 
     const label = capitalize(decoded);
-    const isClickable = index % 2 === 1; // odd indices are values
+    const isClickable = index % 2 === 1;
 
     return (
-      <span key={index}>
-        {index > 0 && <span className="mx-1">{'>'}</span>}
+      <span key={index + 1}>
+        <span className="mx-1">{'>'}</span>
         {isClickable ? (
           <Link
             to={to}
@@ -37,7 +37,20 @@ const generateBreadcrumbLinks = (pathname: string) => {
       </span>
     );
   });
+
+
+  return [
+    <Link
+      key="home"
+      to="/"
+      className="text-[var(--primary-color)] hover:underline underline-offset-2 transition-all"
+    >
+      Home
+    </Link>,
+    ...items,
+  ];
 };
+
 
 
 export default function AppWrapper({ children }: WrapperProps) {
@@ -110,7 +123,7 @@ export default function AppWrapper({ children }: WrapperProps) {
               >
                 Settings
               </button>
-
+                <hr className='border-[var(--primary-color)]'/>
               <LogoutButton />
             </div>
           )}

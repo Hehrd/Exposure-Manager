@@ -1,13 +1,10 @@
-// src/hooks/useClickOutsideToStopEditing.ts
 import { useEffect } from "react";
-import type { RefObject } from "react";
-import type { AgGridReact } from "ag-grid-react";
+import { AgGridReact } from "ag-grid-react";
 
-export function useClickOutsideToStopEditing(gridRef: RefObject<AgGridReact<any> | null>) {
+export function useClickOutsideToStopEditing(gridRef: React.RefObject<AgGridReact<any>>) {
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-
       const gridWrapper = document.getElementById("custom-grid-wrapper");
       const isInGrid = gridWrapper?.contains(target);
       const isCell = target.closest(".ag-cell");
@@ -21,8 +18,8 @@ export function useClickOutsideToStopEditing(gridRef: RefObject<AgGridReact<any>
 
       const isOutsideGrid = !isInGrid;
 
-      if ((isOutsideGrid || isBlankGridSpace) && gridRef.current) {
-        gridRef.current.api.stopEditing();
+      if (isOutsideGrid || isBlankGridSpace) {
+        gridRef.current?.api.stopEditing();
       }
     };
 

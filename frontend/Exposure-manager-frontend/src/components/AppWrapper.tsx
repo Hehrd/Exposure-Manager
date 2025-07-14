@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, ReactNode } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import LogoutButton from './LogoutButton';
-
+import gearIcon from '../assets/gear.svg'
 interface WrapperProps {
   children: ReactNode;
 }
@@ -117,10 +117,11 @@ export default function AppWrapper({ children }: WrapperProps) {
               <button
                 onClick={() => {
                   setProfileOpen(false);
-                  navigate('/settings');
+                  navigate('/settings/account');
                 }}
                 className="w-full text-left text-sm flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary-color)] text-[var(--text-color)] hover:opacity-90 transition-all"
               >
+                <img src={gearIcon} alt="Settings" className="w-4 h-4" />
                 Settings
               </button>
                 <hr className='border-[var(--primary-color)]'/>

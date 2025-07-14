@@ -5,16 +5,19 @@ import type {
   GetContextMenuItemsParams,
   MenuItemDef,
 } from "ag-grid-community";
-import { getPolicyContextMenuItems } from "../menus/getPolicyContextMenuItems";
 import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
 import { ContextMenuModule } from "ag-grid-enterprise";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
+
 import AppWrapper from "../components/AppWrapper";
 import TableToolbar from "../components/TableToolbar";
 import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { toast } from "react-toastify";
 import type { PolicyRow } from "../types/PolicyRow";
+import { getPolicyContextMenuItems } from "../menus/getPolicyContextMenuItems";
 
 ModuleRegistry.registerModules([AllCommunityModule, ContextMenuModule]);
 
@@ -51,8 +54,6 @@ const PolicyPage = () => {
   const rawTableName = pathSegments[pathSegments.length - 1];
   const tableName = decodeURIComponent(rawTableName);
 
-
-
   const [rowData, setRowData] = useState<PolicyRow[]>(initialPolicyData);
 
   const [colDefs] = useState<ColDef<PolicyRow>[]>([
@@ -77,7 +78,6 @@ const PolicyPage = () => {
     minWidth: 100,
   }), []);
 
-
   const handleSaveChanges = () => {
     gridRef.current?.api.stopEditing();
     const allData: PolicyRow[] = [];
@@ -85,20 +85,24 @@ const PolicyPage = () => {
       if (node.data) allData.push(node.data);
     });
     console.log("Saved all data:", allData);
+    toast.success("Table saved");
   };
 
   const handleRefresh = () => {
     gridRef.current?.api.stopEditing();
     setRowData(initialPolicyData);
+    toast.info("Table refreshed");
   };
+
+  useKeyboardShortcuts(handleSaveChanges, handleRefresh);
 
   return (
     <AppWrapper>
-        <TableToolbar
-            tableName={tableName}
-            onSave={handleSaveChanges}
-            onRefresh={handleRefresh}
-          />
+      <TableToolbar
+        tableName={tableName}
+        onSave={handleSaveChanges}
+        onRefresh={handleRefresh}
+      />
 
       <div id="custom-grid-wrapper" style={{ width: "100%", height: "85vh" }}>
         <AgGridReact

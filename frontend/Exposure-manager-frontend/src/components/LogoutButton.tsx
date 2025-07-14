@@ -16,10 +16,10 @@ export default function LogoutButton() {
       onClick={handleLogout}
       className="text-sm flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary-color)] text-[var(--text-color)] hover:opacity-90 transition-all"
     >
-     <span>Log out</span>
-      <span>
-        <img src={icon} alt="logout icon" className="w-5 h-5" />
-      </span>
+    <span>
+      <img src={icon} alt="logout icon" className="w-5 h-5" />
+    </span>
+    <span>Log out</span>
     </button>
   );
 }

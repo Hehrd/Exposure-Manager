@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ThemeToggle from './components/ThemeToggle';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -8,11 +8,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AppWrapper from './components/AppWrapper';
 import DatabasePage from './pages/DatabasePage'; 
 import PortfolioPage from './pages/PortfolioPage'; 
- import AccountPage from './pages/AccountPage';
+import AccountPage from './pages/AccountPage';
 import LocationsAndPoliciesPage from './pages/LocationsAndPoliciesPage';
 import LocationPage from './pages/LocationPage';
 import PolicyPage from './pages/PolicyPage';
-import SettingsPage from './pages/SettingsPage';
+import SettingsAppearancePage from './pages/SettingsAppearancePage';
+import SettingsAccountPage from './pages/SettingsAccountPage';
 import { ToastContainer } from 'react-toastify';
 import { useContext } from 'react';
 import { ThemeContext } from './context/ThemeContext';
@@ -33,13 +34,13 @@ function App() {
       }}
     >
       <Routes>
-        {/* Home = list of databases */}
         <Route path="/" element={<DatabasePage />} />
-
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/table" element={<TablePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings" element={<Navigate to="/settings/account" replace />} />
+        <Route path="/settings/appearance" element={<SettingsAppearancePage />} />
+        <Route path="/settings/account" element={<SettingsAccountPage />} />
 
         <Route
           path="/dashboard"
@@ -51,26 +52,10 @@ function App() {
         />
 
         <Route path="/databases/:databaseId" element={<PortfolioPage />} />
-
-        
-        <Route
-          path="/databases/:databaseId/portfolios/:portfolioId"
-          element={<AccountPage />}
-        />
-        <Route
-          path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId"
-          element={<LocationsAndPoliciesPage />}
-        />
-        
-
-        <Route
-          path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId/locations/:locationId"
-          element={<LocationPage />}
-        />
-        <Route
-          path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId/policies/:policyId"
-          element={<PolicyPage />}
-        />
+        <Route path="/databases/:databaseId/portfolios/:portfolioId" element={<AccountPage />} />
+        <Route path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId" element={<LocationsAndPoliciesPage />} />
+        <Route path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId/locations/:locationId" element={<LocationPage />} />
+        <Route path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId/policies/:policyId" element={<PolicyPage />} />
       </Routes>
 
       <ToastContainer

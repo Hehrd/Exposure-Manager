@@ -1,9 +1,11 @@
 package com.project.org.persistence.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
 @Entity
 @Table(name = "databases")
+@Data
 public class DatabaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

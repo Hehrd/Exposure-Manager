@@ -1,4 +1,3 @@
-// 📁 src/components/ProtectedRoute.tsx
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -10,17 +9,21 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children }: Props) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      toast.warning('Please log in to see this page');
-      const timeout = setTimeout(() => setShouldRedirect(true), 10);
+    if (!loading && !user) {
+      const timeout = setTimeout(() => {
+        toast.warning('Please log in to see this page');
+        setShouldRedirect(true);
+      }, 10);
+
       return () => clearTimeout(timeout);
     }
-  }, [user]);
+  }, [loading, user]);
 
+  if (loading) return null; // or loading spinner/skeleton
   if (!user && shouldRedirect) return <Navigate to="/login" />;
   if (!user) return null;
 

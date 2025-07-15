@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchUser = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/me`, {
-        credentials: 'include',
+        credentials: 'include', // ⬅️ send the HttpOnly cookie
       });
 
       if (!res.ok) {
@@ -58,12 +58,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      credentials: 'include',
+      credentials: 'include', // ⬅️ important: let browser receive HttpOnly cookie
     });
 
     if (!res.ok) throw new Error('Invalid credentials');
 
-    await fetchUser();
+    await fetchUser(); // ⬅️ now you are authenticated via the cookie
   };
 
   const logout = async () => {

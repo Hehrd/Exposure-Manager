@@ -1,5 +1,6 @@
 package com.project.org.controller.dto.request.user;
 
+import com.project.org.persistence.entity.enums.Roles;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -10,5 +11,5 @@ public class UserSignUpReqDTO {
     @NotNull
     private String password;
     @NotNull
-    private String roleText;
+    private Roles role;
 }

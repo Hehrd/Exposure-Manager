@@ -19,7 +19,7 @@ export default function Signup() {
   const body = {
     username,
     password,
-    role: 'admin',
+    role: 'ADMIN',
   };
 
   try {

@@ -1,15 +1,17 @@
 package com.project.org.controller;
 
+import com.project.org.controller.dto.request.UserLoginReqDTO;
 import com.project.org.controller.dto.request.UserSignUpReqDTO;
-import com.project.org.controller.dto.response.UserSignUpResDTO;
+import com.project.org.controller.dto.response.DefaultUserResDTO;
+import com.project.org.error.exception.NotFoundException;
 import com.project.org.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class UserController {
@@ -21,10 +23,46 @@ public class UserController {
     }
 
     @PostMapping(value = "/signup", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<UserSignUpResDTO> signUp(@RequestBody UserSignUpReqDTO userSignUpReqDTO) {
-        UserSignUpResDTO resDTO = userService.signUp(userSignUpReqDTO);
+    public ResponseEntity<DefaultUserResDTO> signUp(@RequestBody UserSignUpReqDTO userSignUpReqDTO) {
+        DefaultUserResDTO resDTO = userService.signUp(userSignUpReqDTO);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resDTO);
     }
+
+    @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> login(@RequestBody UserLoginReqDTO userLoginReqDTO) {
+        String jwt = userService.login(userLoginReqDTO);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.SET_COOKIE, createJwtCookie(jwt).toString());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .headers(headers)
+                .body("Login successful!");
+    }
+
+
+
+    @GetMapping(value = "/me")
+    public ResponseEntity<DefaultUserResDTO> me(@CookieValue("access_token") String token) throws NotFoundException {
+        DefaultUserResDTO resDTO = userService.me(token);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(resDTO);
+    }
+
+    @PostMapping(value = "/hello")
+    public ResponseEntity<String> ohio(HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body("Hello World!");
+    }
+
+    private ResponseCookie createJwtCookie(String jwt) {
+        ResponseCookie jwtCookie = ResponseCookie.from("access_token", jwt)
+                .httpOnly(true)
+                .path("/")
+                .maxAge(7 * 24 * 60 * 60)
+                .build();
+        return jwtCookie;
+    }
 }
+

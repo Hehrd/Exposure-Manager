@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch('http://localhost:6969/me', {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/me`, {
           credentials: 'include',
         });
 
@@ -45,28 +45,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkSession();
   }, []);
 
-  // Login: send credentials, cookie is set server-side
+  // ✅ Login with JSON body and role: "ADMIN"
   const login = async (username: string, password: string) => {
-    const body = new URLSearchParams();
-    body.append('username', username);
-    body.append('password', password);
+    const body = {
+      username,
+      password,
+      role: 'ADMIN',
+    };
 
-    const res = await fetch('http://localhost:6969/login', {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
       credentials: 'include',
     });
 
     if (!res.ok) throw new Error('Invalid credentials');
 
     const data = await res.json();
-    setUser(data.username); // Trust backend response
+    setUser(data.username);
   };
 
-  // Logout: server clears cookie, frontend clears context
+  // ✅ Logout clears cookie + local state
   const logout = async () => {
-    await fetch('http://localhost:6969/logout', {
+    await fetch(`${import.meta.env.VITE_BACKEND_URL}/logout`, {
       method: 'POST',
       credentials: 'include',
     });

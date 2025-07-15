@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useLocation, Link } from "react-router-dom";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, GetContextMenuItemsParams, MenuItemDef } from "ag-grid-community";
 import {
   AllCommunityModule,
   ModuleRegistry,
@@ -15,12 +15,14 @@ import TableToolbar from "../components/TableToolbar";
 import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { toast } from "react-toastify";
+import { getPortfolioContextMenuItems } from "../menus/getPortfolioContextMenuItems";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface PortfolioRow {
-  portfolioName: string;
-  ownerName: string;
+  id?: string;
+  name: string;
+  databaseName: string;
 }
 
 const PortfolioLinkRenderer = ({ value }: { value: string }) => {
@@ -35,25 +37,30 @@ const PortfolioLinkRenderer = ({ value }: { value: string }) => {
   );
 };
 
-const DatabasePage = () => {
+const PortfolioPage = () => {
   const location = useLocation();
   const gridRef = useRef<AgGridReact<PortfolioRow>>(null);
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const rawTableName = pathSegments[pathSegments.length - 1];
   const tableName = decodeURIComponent(rawTableName);
 
-  const [rowData, setRowData] = useState<PortfolioRow[] | null>(null); // null = loading
+  const [rowData, setRowData] = useState<PortfolioRow[]>([]);
+  const [originalData, setOriginalData] = useState<PortfolioRow[]>([]);
+
+  useClickOutsideToStopEditing(gridRef);
+  useKeyboardShortcuts(handleSaveChanges, handleRefresh);
+
   const [colDefs] = useState<ColDef<PortfolioRow>[]>([
     {
-      field: "portfolioName",
+      field: "name",
       headerName: "Portfolio Name",
       flex: 1,
       editable: true,
       cellRenderer: PortfolioLinkRenderer,
     },
     {
-      field: "ownerName",
-      headerName: "Owner Name",
+      field: "databaseName",
+      headerName: "Database Name",
       flex: 1,
       editable: true,
     },
@@ -66,12 +73,10 @@ const DatabasePage = () => {
     minWidth: 100,
   }), []);
 
-  useClickOutsideToStopEditing(gridRef);
-
-  const fetchPortfolios = async (page = 0, size = 20) => {
+  const fetchPortfolios = async () => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=${page}&size=${size}&databaseId=1`,
+        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=0&size=20&databaseId=1`,
         {
           credentials: "include",
         }
@@ -81,10 +86,12 @@ const DatabasePage = () => {
 
       const data = await res.json();
       setRowData(data.content || []);
+      setOriginalData(data.content || []);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load portfolios");
-      setRowData([]); // fallback to empty
+      setRowData([]);
+      setOriginalData([]);
     }
   };
 
@@ -92,14 +99,63 @@ const DatabasePage = () => {
     fetchPortfolios();
   }, []);
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     gridRef.current?.api.stopEditing();
-    const allData: PortfolioRow[] = [];
+    const currentData: PortfolioRow[] = [];
     gridRef.current?.api.forEachNode((node) => {
-      if (node.data) allData.push(node.data);
+      if (node.data) currentData.push(node.data);
     });
-    console.log("Saved portfolio data:", allData);
-    toast.success("Portfolio table saved");
+
+    const originalIds = new Set(originalData.map((d) => d.id));
+    const currentIds = new Set(currentData.map((d) => d.id));
+
+    const toCreate = currentData.filter((d) => !d.id);
+    const toUpdate = currentData.filter((d) => {
+      const original = originalData.find((o) => o.id === d.id);
+      return (
+        d.id &&
+        original &&
+        (d.name !== original.name || d.databaseName !== original.databaseName)
+      );
+    });
+    const toDelete = originalData
+      .filter((d) => !currentIds.has(d.id))
+      .map((d) => d.id);
+
+    try {
+      if (toCreate.length > 0) {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(toCreate),
+          credentials: "include",
+        });
+      }  
+
+      if (toUpdate.length > 0) {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(toUpdate),
+          credentials: "include",
+        });
+      }
+
+      if (toDelete.length > 0) {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(toDelete),
+          credentials: "include",
+        });
+      }
+
+      toast.success("Changes saved!");
+      fetchPortfolios();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save changes.");
+    }
   };
 
   const handleRefresh = () => {
@@ -107,8 +163,6 @@ const DatabasePage = () => {
     fetchPortfolios();
     toast.info("Portfolio table refreshed");
   };
-
-  useKeyboardShortcuts(handleSaveChanges, handleRefresh);
 
   return (
     <AppWrapper>
@@ -122,7 +176,7 @@ const DatabasePage = () => {
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"
-          rowData={rowData ?? []}
+          rowData={rowData}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
           pagination={true}
@@ -131,10 +185,11 @@ const DatabasePage = () => {
           overlayLoadingTemplate={
             '<span class="ag-overlay-loading-center">Loading portfolios...</span>'
           }
+          getContextMenuItems={getPortfolioContextMenuItems(setRowData)}
         />
       </div>
     </AppWrapper>
   );
 };
 
-export default DatabasePage;
+export default PortfolioPage;

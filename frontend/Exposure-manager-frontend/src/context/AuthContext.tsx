@@ -22,30 +22,30 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<string | null>(null);
 
-  // ✅ Check for cookie/session on app load
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/me`, {
-          credentials: 'include',
-        });
+  const fetchUser = async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/me`, {
+        credentials: 'include',
+      });
 
-        if (!res.ok) {
-          setUser(null);
-          return;
-        }
-
-        const data = await res.json();
-        setUser(data.username); // Backend returns { username: "..." }
-      } catch {
+      if (!res.ok) {
         setUser(null);
+        return;
       }
-    };
 
-    checkSession();
+      const data = await res.json();
+      setUser(data.username);
+    } catch {
+      setUser(null);
+    }
+  };
+
+  // ✅ On first load
+  useEffect(() => {
+    fetchUser();
   }, []);
 
-  // ✅ Login with JSON body and role: "ADMIN"
+  // ✅ Login: only check status, then fetch from /me
   const login = async (username: string, password: string) => {
     const body = {
       username,
@@ -62,11 +62,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (!res.ok) throw new Error('Invalid credentials');
 
-    const data = await res.json();
-    setUser(data.username);
+    await fetchUser(); // trust /me as source of truth
   };
 
-  // ✅ Logout clears cookie + local state
+  // ✅ Logout clears backend + frontend
   const logout = async () => {
     await fetch(`${import.meta.env.VITE_BACKEND_URL}/logout`, {
       method: 'POST',

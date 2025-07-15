@@ -9,21 +9,26 @@ export default function Signup() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
+  if (password !== confirmPassword) {
+    toast.error('Passwords do not match');
+    return;
+  }
 
-    const body = new URLSearchParams();
-    body.append('username', username);
-    body.append('password', password);
+  const body = {
+    username,
+    password,
+    role: 'admin',
+  };
 
-    const res = await fetch('http://localhost:6969/signup', {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/signup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
       credentials: 'include',
     });
 
@@ -31,9 +36,15 @@ export default function Signup() {
       toast.success('Account created! Redirecting...');
       navigate('/login');
     } else {
-      toast.error('Signup failed. Try again.');
+      const errorText = await res.text();
+      toast.error(`Signup failed: ${errorText || 'Try again.'}`);
     }
-  };
+  } catch (err) {
+    toast.error('Network error. Please try again.');
+    console.error(err);
+  }
+};
+
 
   return (
     <form

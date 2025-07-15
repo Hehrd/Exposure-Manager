@@ -1,11 +1,10 @@
 package com.project.org.service;
 
-import com.project.org.controller.dto.request.UserLoginReqDTO;
-import com.project.org.controller.dto.request.UserSignUpReqDTO;
+import com.project.org.controller.dto.request.user.UserLoginReqDTO;
+import com.project.org.controller.dto.request.user.UserSignUpReqDTO;
 import com.project.org.controller.dto.response.DefaultUserResDTO;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.persistence.entity.UserEntity;
-import com.project.org.persistence.entity.enums.Roles;
 import com.project.org.persistence.repository.UserRepository;
 import com.project.org.security.CustomUserDetails;
 import com.project.org.util.ObjectMapper;

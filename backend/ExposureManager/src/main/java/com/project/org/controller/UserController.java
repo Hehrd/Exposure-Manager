@@ -1,16 +1,13 @@
 package com.project.org.controller;
 
-import com.project.org.controller.dto.request.UserLoginReqDTO;
-import com.project.org.controller.dto.request.UserSignUpReqDTO;
+import com.project.org.controller.dto.request.user.UserLoginReqDTO;
+import com.project.org.controller.dto.request.user.UserSignUpReqDTO;
 import com.project.org.controller.dto.response.DefaultUserResDTO;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.service.UserService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

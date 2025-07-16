@@ -12,7 +12,6 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-table": "^8.21.3",
-    "ag-grid-community": "^34.0.2",
     "ag-grid-enterprise": "^34.0.0",
     "ag-grid-react": "^34.0.0",
     "react": "^19.1.0",

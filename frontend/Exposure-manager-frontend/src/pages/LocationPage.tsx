@@ -1,18 +1,15 @@
 import React, { useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import type { ColDef } from "ag-grid-community";
-import {
-  AllCommunityModule,
-  ModuleRegistry,
-  themeQuartz,
-} from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
+import type { ColDef } from "ag-grid-community";
 import "ag-grid-enterprise";
-import "../styles/EditableTable.css";
-import AppWrapper from "../components/AppWrapper";
-import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+import "../styles/EditableTable.css";
+import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import TableToolbar from "../components/TableToolbar";
+import { toast } from "react-toastify";
+import { getLocationContextMenuItems } from "../menus/getLocationContextMenuItems";
+
 
 interface LocationRow {
   name: string;
@@ -22,17 +19,17 @@ interface LocationRow {
   zip: string;
 }
 
-const locationData: LocationRow[] = [
+const initialLocationData: LocationRow[] = [
   { name: "NY HQ", address: "123 Main St", country: "USA", city: "New York", zip: "10001" },
   { name: "London Office", address: "456 Oxford St", country: "UK", city: "London", zip: "W1D 1AN" },
   { name: "Berlin Hub", address: "789 Friedrichstr.", country: "Germany", city: "Berlin", zip: "10117" },
 ];
 
-const LocationPage = () => {
-  const gridRef = useRef<AgGridReact<any>>(null);
-  const { locationId } = useParams();
-
+const LocationTable = () => {
+  const gridRef = useRef<AgGridReact<LocationRow>>(null);
   useClickOutsideToStopEditing(gridRef);
+
+  const [rowData, setRowData] = useState<LocationRow[]>(initialLocationData);
 
   const [colDefs] = useState<ColDef<LocationRow>[]>([
     { field: "name", headerName: "Name", flex: 1, editable: true },
@@ -46,24 +43,51 @@ const LocationPage = () => {
     filter: true,
     editable: true,
     resizable: true,
+    minWidth: 100,
+    tooltipField: "value",
   }), []);
 
+  const handleSave = () => {
+    gridRef.current?.api.stopEditing();
+    const updated: LocationRow[] = [];
+    gridRef.current?.api.forEachNode((node) => {
+      if (node.data) updated.push(node.data);
+    });
+    console.log("Saved locations:", updated);
+    toast.success("Locations saved");
+  };
+
+  const handleRefresh = () => {
+    gridRef.current?.api.stopEditing();
+    setRowData(initialLocationData);
+    toast.info("Locations reset");
+  };
+
+  useKeyboardShortcuts(handleSave, handleRefresh);
+
   return (
-    <AppWrapper>
-      <div id="custom-grid-wrapper" style={{ width: "100%", height: "95vh" }}>
+    <>
+      <TableToolbar
+        tableName="Locations"
+        onSave={handleSave}
+        onRefresh={handleRefresh}
+      />
+      <div id="custom-grid-wrapper" style={{ width: "100%", height: "85%" }}>
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"
-          rowData={locationData}
+          rowData={rowData}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
+          pagination={true}
           columnHoverHighlight={false}
           suppressRowHoverHighlight={true}
-          pagination={true}
+          getContextMenuItems={getLocationContextMenuItems(setRowData)}
+
         />
       </div>
-    </AppWrapper>
+    </>
   );
 };
 
-export default LocationPage;
+export default LocationTable;

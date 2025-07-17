@@ -2,7 +2,8 @@ import type { GetContextMenuItemsParams, MenuItemDef } from "ag-grid-community";
 import type { DatabaseRow } from "../types/DatabaseRow";
 
 export const getDatabaseContextMenuItems = (
-  setRowData: React.Dispatch<React.SetStateAction<DatabaseRow[] | null>>
+  setRowData: React.Dispatch<React.SetStateAction<DatabaseRow[] | null>>,
+  currentUsername: string
 ) => {
   return (params: GetContextMenuItemsParams<DatabaseRow>): MenuItemDef[] => {
     const { node } = params;
@@ -12,26 +13,10 @@ export const getDatabaseContextMenuItems = (
         ...(prev || []),
         {
           databaseName: "NewDatabase",
-          description: "",
-          region: "",
-          environment: "",
-          ownerName: "Unknown Owner",
+          ownerName: currentUsername,
+          _isNew: true,
         },
       ]);
-    };
-
-    const duplicateRow = () => {
-      const data = node?.data;
-      if (data) {
-        setRowData((prev) => [...(prev || []), { ...data }]);
-      }
-    };
-
-    const deleteRow = () => {
-      const data = node?.data;
-      if (data) {
-        setRowData((prev) => (prev || []).filter((r) => r !== data));
-      }
     };
 
     if (!node || !node.data) {
@@ -40,8 +25,24 @@ export const getDatabaseContextMenuItems = (
 
     return [
       { name: "➕ Add Database", action: addRow },
-      { name: "📄 Duplicate Database", action: duplicateRow },
-      { name: "🗑️ Delete Database", action: deleteRow },
+      {
+        name: "📄 Duplicate Database",
+        action: () => {
+          const data = node.data;
+          if (data) {
+            setRowData((prev) => [...(prev || []), { ...data }]);
+          }
+        },
+      },
+      {
+        name: "🗑️ Delete Database",
+        action: () => {
+          const data = node.data;
+          if (data) {
+            setRowData((prev) => (prev || []).filter((r) => r !== data));
+          }
+        },
+      },
     ];
   };
 };

@@ -45,14 +45,9 @@ const initialPolicyData: PolicyRow[] = [
   },
 ];
 
-const PolicyPage = () => {
-  const { policyId } = useParams();
+const PolicyTable = () => {
   const gridRef = useRef<AgGridReact<PolicyRow>>(null);
   useClickOutsideToStopEditing(gridRef);
-  const location = useLocation();
-  const pathSegments = location.pathname.split("/").filter(Boolean);
-  const rawTableName = pathSegments[pathSegments.length - 1];
-  const tableName = decodeURIComponent(rawTableName);
 
   const [rowData, setRowData] = useState<PolicyRow[]>(initialPolicyData);
 
@@ -97,14 +92,13 @@ const PolicyPage = () => {
   useKeyboardShortcuts(handleSaveChanges, handleRefresh);
 
   return (
-    <AppWrapper>
+    <>
       <TableToolbar
-        tableName={tableName}
+        tableName="Policies"
         onSave={handleSaveChanges}
         onRefresh={handleRefresh}
       />
-
-      <div id="custom-grid-wrapper" style={{ width: "100%", height: "85vh" }}>
+      <div id="custom-grid-wrapper" style={{ width: "100%", height: "85%" }}>
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"
@@ -117,8 +111,8 @@ const PolicyPage = () => {
           getContextMenuItems={getPolicyContextMenuItems(setRowData)}
         />
       </div>
-    </AppWrapper>
+    </>
   );
 };
 
-export default PolicyPage;
+export default PolicyTable;

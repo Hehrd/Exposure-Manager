@@ -9,6 +9,8 @@ import {
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
+import { getPortfolioContextMenuItems } from "../menus/getPortfolioContextMenuItems";
+
 
 import AppWrapper from "../components/AppWrapper";
 import TableToolbar from "../components/TableToolbar";
@@ -128,6 +130,7 @@ const DatabasePage = () => {
           pagination={true}
           columnHoverHighlight={false}
           suppressRowHoverHighlight={true}
+          getContextMenuItems={getPortfolioContextMenuItems(setRowData)}
           overlayLoadingTemplate={
             '<span class="ag-overlay-loading-center">Loading portfolios...</span>'
           }

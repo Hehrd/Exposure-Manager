@@ -1,89 +1,42 @@
-import React, { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import type { ColDef } from "ag-grid-community";
-import { AllCommunityModule, ModuleRegistry, themeQuartz } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
-import "ag-grid-enterprise";
-import "../styles/EditableTable.css";
+import React, { useState } from "react";
 import AppWrapper from "../components/AppWrapper";
-
-ModuleRegistry.registerModules([AllCommunityModule]);
-
-interface IRow {
-  location: string;
-  policy: string;
-}
-
-const hardcodedData: IRow[] = [
-  { location: "New York HQ", policy: "General Liability" },
-  { location: "London Branch", policy: "Cyber Risk" },
-  { location: "Tokyo Office", policy: "Property Insurance" },
-  { location: "Berlin Hub", policy: "Directors & Officers" },
-  { location: "Toronto Node", policy: "Business Interruption" },
-];
-
-
-const LocationLinkRenderer = ({ value }: { value: string }) => {
-  const { databaseId, portfolioId, accountId } = useParams();
-  return (
-    <Link
-      to={`/databases/${encodeURIComponent(databaseId!)}/portfolios/${encodeURIComponent(portfolioId!)}/accounts/${encodeURIComponent(accountId!)}/locations/${encodeURIComponent(value)}`}
-      className="text-blue-600 dark:text-blue-400 hover:underline"
-    >
-      {value}
-    </Link>
-  );
-};
-
-
-const PolicyLinkRenderer = ({ value }: { value: string }) => {
-  const { databaseId, portfolioId, accountId } = useParams();
-  return (
-    <Link
-      to={`/databases/${encodeURIComponent(databaseId!)}/portfolios/${encodeURIComponent(portfolioId!)}/accounts/${encodeURIComponent(accountId!)}/policies/${encodeURIComponent(value)}`}
-      className="text-blue-600 dark:text-blue-400 hover:underline"
-    >
-      {value}
-    </Link>
-  );
-};
+import LocationTable from "./LocationPage";
+import PolicyTable from "./PolicyPage";
 
 const LocationsAndPoliciesPage = () => {
-  const [colDefs] = useState<ColDef<IRow>[]>([
-    {
-      field: "location",
-      headerName: "Location",
-      flex: 1,
-      cellRenderer: LocationLinkRenderer,
-      cellClass: "ag-cell-content-centered",
-    },
-    {
-      field: "policy",
-      headerName: "Policy",
-      flex: 1,
-      cellRenderer: PolicyLinkRenderer,
-      cellClass: "ag-cell-content-centered",
-    },
-  ]);
-
-  const defaultColDef = useMemo<ColDef>(() => ({
-    filter: true,
-    editable: false,
-    resizable: true,
-  }), []);
+  const [activeTab, setActiveTab] = useState<"locations" | "policies">("locations");
 
   return (
     <AppWrapper>
-      <div id="custom-grid-wrapper" style={{ width: "100%", height: "95vh" }}>
-        <AgGridReact
-          className="ag-theme-quartz"
-          rowData={hardcodedData}
-          columnDefs={colDefs}
-          defaultColDef={defaultColDef}
-          columnHoverHighlight={false}
-          suppressRowHoverHighlight={true}
-          pagination={true}
-        />
+      <div className="px-6 py-4">
+        <div className="flex space-x-4 mb-4">
+          <button
+            onClick={() => setActiveTab("locations")}
+            className={`px-4 py-2 rounded transition-colors duration-200 border`}
+            style={{
+              backgroundColor: activeTab === "locations" ? "var(--primary-color)" : "var(--card-bg)",
+              color: activeTab === "locations" ? "var(--text-color)" : "var(--text-color)",
+              borderColor: "var(--primary-color)",
+            }}
+          >
+            Locations
+          </button>
+          <button
+            onClick={() => setActiveTab("policies")}
+            className={`px-4 py-2 rounded transition-colors duration-200 border`}
+            style={{
+              backgroundColor: activeTab === "policies" ? "var(--primary-color)" : "var(--card-bg)",
+              color: activeTab === "policies" ? "var(--text-color)" : "var(--text-color)",
+              borderColor: "var(--primary-color)",
+            }}
+          >
+            Policies
+          </button>
+        </div>
+
+        <div className="w-full h-[85vh]">
+          {activeTab === "locations" ? <LocationTable /> : <PolicyTable />}
+        </div>
       </div>
     </AppWrapper>
   );

@@ -89,10 +89,8 @@ const Home = () => {
 
   const handleSaveChanges = async () => {
     gridRef.current?.api.stopEditing();
-    const allData: DatabaseRow[] = [];
-    gridRef.current?.api.forEachNode((node) => {
-      if (node.data) allData.push(node.data);
-    });
+    const allData = rowData ?? [];
+
 
     const newRows = allData.filter((row) => row._isNew);
     const editedRows = allData.filter(
@@ -147,8 +145,33 @@ const Home = () => {
         toast.error("Update failed");
       }
     }
+    
+    // === DELETE ===
+    const deletedRows = allData.filter((row) => row._isDeleted && !row._isNew);
+    const deletePayload = deletedRows.map((row) => row.databaseName);
 
-    console.log("Saved:", { createPayload, updatePayload });
+    console.log(' deleted payload: ', deletePayload)
+    console.log('deleted rows: ', deletedRows)
+    if (deletePayload.length > 0) {
+      console.log("ALOOOOOOOOOOO")
+      console.log(deletePayload)
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/databases`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(deletePayload),
+        });
+
+        if (!res.ok) throw new Error("Delete failed");
+        toast.success("Deleted databases");
+      } catch (err) {
+        console.error(err);
+        toast.error("Delete failed");
+      }
+    }
+
+    console.log("Saved:", { createPayload, updatePayload, deletePayload });
     toast.success("Database table saved");
     fetchDatabases(); // Refresh table
   };
@@ -174,7 +197,7 @@ const Home = () => {
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"
-          rowData={rowData ?? []}
+          rowData={(rowData ?? []).filter((row) => !row._isDeleted)}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
           pagination={true}

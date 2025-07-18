@@ -30,19 +30,38 @@ export const getDatabaseContextMenuItems = (
         action: () => {
           const data = node.data;
           if (data) {
-            setRowData((prev) => [...(prev || []), { ...data }]);
+            setRowData((prev) => [
+              ...(prev || []),
+              {
+                ...data,
+                _isNew: true,
+                _originalName: undefined, // or `NewDatabaseName-${Date.now()}`
+              },
+            ]);
           }
         },
-      },
+      },    
       {
         name: "🗑️ Delete Database",
         action: () => {
           const data = node.data;
           if (data) {
-            setRowData((prev) => (prev || []).filter((r) => r !== data));
+            setRowData((prev) => {
+              const updated = (prev || []).map((row) =>
+                row._originalName === data._originalName
+                  ? { ...row, _isDeleted: true }
+                  : row
+              );
+              console.log("✅ Updated rowData after delete:", updated);
+              return updated;
+            });
+
+            console.log("after set row data:", data);
+
+
           }
         },
-      },
+      }
     ];
   };
 };

@@ -1,5 +1,5 @@
-export interface DatabaseRow {
-  databaseName: string;
+export interface PortfolioRow {
+  portfolioName: string;
   ownerName: string;
   _isNew?: boolean;
   _originalName?: string;

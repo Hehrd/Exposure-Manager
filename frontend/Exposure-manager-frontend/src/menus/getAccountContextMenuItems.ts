@@ -1,32 +1,33 @@
 import type { GetContextMenuItemsParams, MenuItemDef } from "ag-grid-community";
-import type { PortfolioRow } from "../types/PortfolioRow";
+import type { AccountRow } from "../types/AccountRow";
 
-export const getPortfolioContextMenuItems = (
-  setRowData: React.Dispatch<React.SetStateAction<PortfolioRow[] | null>>,
+export const getAccountContextMenuItems = (
+  setRowData: React.Dispatch<React.SetStateAction<AccountRow[] | null>>,
   currentUsername: string
 ) => {
-  return (params: GetContextMenuItemsParams<PortfolioRow>): MenuItemDef[] => {
+  return (params: GetContextMenuItemsParams<AccountRow>): MenuItemDef[] => {
     const { node } = params;
 
     const addRow = () => {
       setRowData((prev) => [
         ...(prev || []),
         {
-          portfolioName: "NewPortfolio",
+          accountName: "NewAccount",
           ownerName: currentUsername,
           _isNew: true,
         },
       ]);
+      console.log("➕ Added new account row");
     };
 
     if (!node || !node.data) {
-      return [{ name: "➕ Add Portfolio", action: addRow }];
+      return [{ name: "➕ Add Account", action: addRow }];
     }
 
     return [
-      { name: "➕ Add Portfolio", action: addRow },
+      { name: "➕ Add Account", action: addRow },
       {
-        name: "📄 Duplicate Portfolio",
+        name: "📄 Duplicate Account",
         action: () => {
           const data = node.data;
           if (data) {
@@ -38,11 +39,12 @@ export const getPortfolioContextMenuItems = (
                 _originalName: undefined,
               },
             ]);
+            console.log("📄 Duplicated account:", data);
           }
         },
       },
       {
-        name: "🗑️ Delete Portfolio",
+        name: "🗑️ Delete Account",
         action: () => {
           const data = node.data;
           if (data) {
@@ -53,6 +55,7 @@ export const getPortfolioContextMenuItems = (
                   : row
               )
             );
+            console.log("🗑️ Marked account as deleted:", data.accountName);
           }
         },
       },

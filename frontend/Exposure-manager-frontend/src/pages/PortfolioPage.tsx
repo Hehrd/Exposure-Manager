@@ -4,26 +4,21 @@ import type { ColDef } from "ag-grid-community";
 import {
   AllCommunityModule,
   ModuleRegistry,
-  themeQuartz,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
-import { getPortfolioContextMenuItems } from "../menus/getPortfolioContextMenuItems";
-
 
 import AppWrapper from "../components/AppWrapper";
 import TableToolbar from "../components/TableToolbar";
 import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { toast } from "react-toastify";
+import { getPortfolioContextMenuItems } from "../menus/getPortfolioContextMenuItems";
+import { useAuth } from "../context/AuthContext";
+import type { PortfolioRow } from "../types/PortfolioRow";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-interface PortfolioRow {
-  portfolioName: string;
-  ownerName: string;
-}
 
 const PortfolioLinkRenderer = ({ value }: { value: string }) => {
   const { databaseId } = useParams();
@@ -37,14 +32,20 @@ const PortfolioLinkRenderer = ({ value }: { value: string }) => {
   );
 };
 
+// ... imports unchanged
 const DatabasePage = () => {
+  const { databaseId } = useParams();
   const location = useLocation();
+  const { user } = useAuth();
   const gridRef = useRef<AgGridReact<PortfolioRow>>(null);
+  const hasFetchedOnMount = useRef(false);
+
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const rawTableName = pathSegments[pathSegments.length - 1];
   const tableName = decodeURIComponent(rawTableName);
 
-  const [rowData, setRowData] = useState<PortfolioRow[] | null>(null); // null = loading
+  const [rowData, setRowData] = useState<PortfolioRow[] | null>(null);
+
   const [colDefs] = useState<ColDef<PortfolioRow>[]>([
     {
       field: "portfolioName",
@@ -57,7 +58,7 @@ const DatabasePage = () => {
       field: "ownerName",
       headerName: "Owner Name",
       flex: 1,
-      editable: true,
+      editable: false,
     },
   ]);
 
@@ -71,41 +72,112 @@ const DatabasePage = () => {
   useClickOutsideToStopEditing(gridRef);
 
   const fetchPortfolios = async (page = 0, size = 20) => {
+    console.log("📡 Fetching portfolios...");
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=${page}&size=${size}&databaseId=1`,
-        {
-          credentials: "include",
-        }
+        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=${page}&size=${size}&databaseId=${databaseId}`,
+        { credentials: "include" }
       );
 
       if (!res.ok) throw new Error("Failed to fetch portfolios");
 
       const data = await res.json();
-      setRowData(data.content || []);
+      console.log("✅ Fetched portfolios:", data.content);
+      setRowData(
+        (data.content || []).map((p: any) => ({
+          portfolioName: p.name,
+          ownerName: p.ownerName,
+          _originalName: p.name,
+        }))
+      );
     } catch (err) {
-      console.error(err);
+      console.error("❌ Error fetching portfolios:", err);
       toast.error("Failed to load portfolios");
-      setRowData([]); // fallback to empty
+      setRowData([]);
     }
   };
 
   useEffect(() => {
-    fetchPortfolios();
+    if (!hasFetchedOnMount.current) {
+      console.log("🚀 Initial fetch triggered");
+      fetchPortfolios();
+      hasFetchedOnMount.current = true;
+    }
   }, []);
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     gridRef.current?.api.stopEditing();
-    const allData: PortfolioRow[] = [];
-    gridRef.current?.api.forEachNode((node) => {
-      if (node.data) allData.push(node.data);
-    });
-    console.log("Saved portfolio data:", allData);
-    toast.success("Portfolio table saved");
+
+    const allData = rowData ?? [];
+    console.log("📝 All row data:", allData);
+
+    const newRows = allData.filter((row) => row._isNew);
+    const editedRows = allData.filter(
+      (row) =>
+        !row._isNew &&
+        row._originalName &&
+        row.portfolioName !== row._originalName
+    );
+    const deletedRows = allData.filter((row) => row._isDeleted && !row._isNew);
+
+    const createPayload = newRows.map((row) => ({
+      name: row.portfolioName,
+      databaseId,
+    }));
+    const updatePayload = editedRows.map((row) => ({
+      oldName: row._originalName!,
+      newName: row.portfolioName,
+      databaseId,
+    }));
+    const deletePayload = deletedRows.map((row) => row.portfolioName);
+
+    console.log("🆕 Create payload:", createPayload);
+    console.log("✏️ Update payload:", updatePayload);
+    console.log("🗑️ Delete payload:", deletePayload);
+
+    try {
+      if (createPayload.length > 0) {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(createPayload),
+        });
+        toast.success("Created portfolios");
+      }
+
+      if (updatePayload.length > 0) {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(updatePayload),
+        });
+        toast.success("Updated portfolios");
+      }
+
+      if (deletePayload.length > 0) {
+        await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(deletePayload),
+        });
+        toast.success("Deleted portfolios");
+      }
+
+      console.log("💾 Save complete. Refreshing...");
+      fetchPortfolios();
+      toast.success("Portfolio table saved");
+    } catch (err) {
+      console.error("❌ Error saving changes:", err);
+      toast.error("Save failed");
+    }
   };
 
   const handleRefresh = () => {
     gridRef.current?.api.stopEditing();
+    console.log("🔄 Manual refresh");
     fetchPortfolios();
     toast.info("Portfolio table refreshed");
   };
@@ -124,13 +196,13 @@ const DatabasePage = () => {
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"
-          rowData={rowData ?? []}
+          rowData={(rowData ?? []).filter((row) => !row._isDeleted)}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
           pagination={true}
           columnHoverHighlight={false}
           suppressRowHoverHighlight={true}
-          getContextMenuItems={getPortfolioContextMenuItems(setRowData)}
+          getContextMenuItems={getPortfolioContextMenuItems(setRowData, user || "Unknown")}
           overlayLoadingTemplate={
             '<span class="ag-overlay-loading-center">Loading portfolios...</span>'
           }
@@ -141,3 +213,4 @@ const DatabasePage = () => {
 };
 
 export default DatabasePage;
+

@@ -1,18 +1,18 @@
 import type { GetContextMenuItemsParams, MenuItemDef } from "ag-grid-community";
-import type { PortfolioRow } from "../types/PortfolioRow";
+import type { DatabaseRow } from "../types/DatabaseRow";
 
-export const getPortfolioContextMenuItems = (
-  setRowData: React.Dispatch<React.SetStateAction<PortfolioRow[] | null>>,
+export const getDatabaseContextMenuItems = (
+  setRowData: React.Dispatch<React.SetStateAction<DatabaseRow[] | null>>,
   currentUsername: string
 ) => {
-  return (params: GetContextMenuItemsParams<PortfolioRow>): MenuItemDef[] => {
+  return (params: GetContextMenuItemsParams<DatabaseRow>): MenuItemDef[] => {
     const { node } = params;
 
     const addRow = () => {
       setRowData((prev) => [
         ...(prev || []),
         {
-          portfolioName: "NewPortfolio",
+          databaseName: "NewDatabase",
           ownerName: currentUsername,
           _isNew: true,
         },
@@ -20,13 +20,13 @@ export const getPortfolioContextMenuItems = (
     };
 
     if (!node || !node.data) {
-      return [{ name: "➕ Add Portfolio", action: addRow }];
+      return [{ name: "➕ Add Database", action: addRow }];
     }
 
     return [
-      { name: "➕ Add Portfolio", action: addRow },
+      { name: "➕ Add Database", action: addRow },
       {
-        name: "📄 Duplicate Portfolio",
+        name: "📄 Duplicate Database",
         action: () => {
           const data = node.data;
           if (data) {
@@ -35,27 +35,33 @@ export const getPortfolioContextMenuItems = (
               {
                 ...data,
                 _isNew: true,
-                _originalName: undefined,
+                _originalName: undefined, // or `NewDatabaseName-${Date.now()}`
               },
             ]);
           }
         },
-      },
+      },    
       {
-        name: "🗑️ Delete Portfolio",
+        name: "🗑️ Delete Database",
         action: () => {
           const data = node.data;
           if (data) {
-            setRowData((prev) =>
-              (prev || []).map((row) =>
+            setRowData((prev) => {
+              const updated = (prev || []).map((row) =>
                 row._originalName === data._originalName
                   ? { ...row, _isDeleted: true }
                   : row
-              )
-            );
+              );
+              console.log("✅ Updated rowData after delete:", updated);
+              return updated;
+            });
+
+            console.log("after set row data:", data);
+
+
           }
         },
-      },
+      }
     ];
   };
 };

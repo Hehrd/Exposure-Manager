@@ -21,10 +21,10 @@ import type { PortfolioRow } from "../types/PortfolioRow";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const PortfolioLinkRenderer = ({ value }: { value: string }) => {
-  const { databaseId } = useParams();
+  const { databaseName } = useParams();
   return (
     <Link
-      to={`/databases/${encodeURIComponent(databaseId!)}/portfolios/${encodeURIComponent(value)}`}
+      to={`/databases/${encodeURIComponent(databaseName!)}/portfolios/${encodeURIComponent(value)}`}
       className="text-blue-600 dark:text-blue-400 hover:underline"
     >
       {value}
@@ -32,9 +32,8 @@ const PortfolioLinkRenderer = ({ value }: { value: string }) => {
   );
 };
 
-// ... imports unchanged
 const DatabasePage = () => {
-  const { databaseId } = useParams();
+  const { databaseName } = useParams();
   const location = useLocation();
   const { user } = useAuth();
   const gridRef = useRef<AgGridReact<PortfolioRow>>(null);
@@ -75,7 +74,7 @@ const DatabasePage = () => {
     console.log("📡 Fetching portfolios...");
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=${page}&size=${size}&databaseId=${databaseId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=${page}&size=${size}&databaseName=${databaseName}`,
         { credentials: "include" }
       );
 
@@ -122,12 +121,12 @@ const DatabasePage = () => {
 
     const createPayload = newRows.map((row) => ({
       name: row.portfolioName,
-      databaseId,
+      databaseName,
     }));
     const updatePayload = editedRows.map((row) => ({
       oldName: row._originalName!,
       newName: row.portfolioName,
-      databaseId,
+      databaseName,
     }));
     const deletePayload = deletedRows.map((row) => row.portfolioName);
 
@@ -213,4 +212,3 @@ const DatabasePage = () => {
 };
 
 export default DatabasePage;
-

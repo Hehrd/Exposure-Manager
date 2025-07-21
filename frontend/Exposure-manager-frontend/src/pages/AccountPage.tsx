@@ -20,10 +20,12 @@ import type { AccountRow } from "../types/AccountRow";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const AccountLinkRenderer = ({ value }: { value: string }) => {
-  const { databaseId, portfolioId } = useParams();
+  const { databaseName, portfolioName, portfolioId } = useParams();
   return (
     <Link
-      to={`/databases/${encodeURIComponent(databaseId!)}/portfolios/${encodeURIComponent(portfolioId!)}/accounts/${encodeURIComponent(value)}`}
+      to={`/databases/${encodeURIComponent(databaseName!)}/portfolios/${encodeURIComponent(
+        portfolioName!
+      )}/${encodeURIComponent(portfolioId!)}/accounts/${encodeURIComponent(value)}`}
       className="text-blue-600 dark:text-blue-400 hover:underline"
     >
       {value}
@@ -33,7 +35,7 @@ const AccountLinkRenderer = ({ value }: { value: string }) => {
 
 const AccountPage = () => {
   const gridRef = useRef<AgGridReact<AccountRow>>(null);
-  const { portfolioId } = useParams();
+  const { portfolioId, databaseName, portfolioName } = useParams();
   const hasFetchedOnMount = useRef(false);
 
   const [rowData, setRowData] = useState<AccountRow[] | null>(null);

@@ -10,34 +10,49 @@ interface WrapperProps {
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const generateBreadcrumbLinks = (pathname: string) => {
-  const segments = pathname.split('/').filter(Boolean);
-  const paths: string[] = [];
+  const segments = pathname.split("/").filter(Boolean);
 
-  const items = segments.map((segment, index) => {
-    const decoded = decodeURIComponent(segment);
-    paths.push(segment);
-    const to = '/' + paths.join('/');
+  if (segments.length < 2) {
+    return [
+      <Link
+        key="home"
+        to="/"
+        className="text-[var(--primary-color)] hover:underline underline-offset-2 transition-all"
+      >
+        Home
+      </Link>,
+    ];
+  }
 
-    const label = capitalize(decoded);
-    const isClickable = index % 2 === 1;
+  const [_, databaseName, __, portfolioName, portfolioId, ___, accountName, accountId, type, name, id] = segments;
 
-    return (
-      <span key={index + 1}>
-        <span className="mx-1">{'>'}</span>
-        {isClickable ? (
-          <Link
-            to={to}
-            className="text-[var(--primary-color)] hover:underline underline-offset-2 transition-all"
-          >
-            {label}
-          </Link>
-        ) : (
-          <span className="text-[var(--text-color)]">{label}</span>
-        )}
-      </span>
-    );
-  });
+  const crumbs = [
+    {
+      label: capitalize(decodeURIComponent(databaseName)),
+      to: `/databases/${databaseName}`,
+    },
+  ];
 
+  if (portfolioName && portfolioId) {
+    crumbs.push({
+      label: capitalize(decodeURIComponent(portfolioName)),
+      to: `/databases/${databaseName}/portfolios/${portfolioName}/${portfolioId}`,
+    });
+  }
+
+  if (accountName && accountId) {
+    crumbs.push({
+      label: capitalize(decodeURIComponent(accountName)),
+      to: `/databases/${databaseName}/portfolios/${portfolioName}/${portfolioId}/accounts/${accountName}/${accountId}`,
+    });
+  }
+
+  if (type && (type === "locations" || type === "policies") && name && id) {
+    crumbs.push({
+      label: capitalize(decodeURIComponent(name)),
+      to: `/databases/${databaseName}/portfolios/${portfolioName}/${portfolioId}/accounts/${accountName}/${accountId}/${type}/${name}/${id}`,
+    });
+  }
 
   return [
     <Link
@@ -47,9 +62,21 @@ const generateBreadcrumbLinks = (pathname: string) => {
     >
       Home
     </Link>,
-    ...items,
+    ...crumbs.map((crumb, index) => (
+      <span key={index}>
+        <span className="mx-1">{">"}</span>
+        <Link
+          to={crumb.to}
+          className="text-[var(--primary-color)] hover:underline underline-offset-2 transition-all"
+        >
+          {crumb.label}
+        </Link>
+      </span>
+    )),
   ];
 };
+
+
 
 
 

@@ -50,12 +50,23 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route path="/databases/:databaseId" element={<PortfolioPage />} />
-        <Route path="/databases/:databaseId/portfolios/:portfolioId" element={<AccountPage />} />
-        <Route path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId" element={<LocationsAndPoliciesPage />} />
-        <Route path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId/locations/:locationId" element={<LocationPage />} />
-        <Route path="/databases/:databaseId/portfolios/:portfolioId/accounts/:accountId/policies/:policyId" element={<PolicyPage />} />
+        <Route path="/databases/:databaseName" element={<PortfolioPage />} />
+        <Route
+          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId"
+          element={<AccountPage />}
+        />
+        <Route
+          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId"
+          element={<LocationsAndPoliciesPage />}
+        />
+        <Route
+          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId/locations/:locationName/:locationId"
+          element={<LocationPage />}
+        />
+        <Route
+          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId/policies/:policyName/:policyId"
+          element={<PolicyPage />}
+        />
       </Routes>
 
       <ToastContainer

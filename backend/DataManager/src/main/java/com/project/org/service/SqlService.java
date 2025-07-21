@@ -1,23 +1,22 @@
 package com.project.org.service;
 
-import org.springframework.web.client.RestTemplate;
+import com.project.org.controller.dto.request.ReqDTO;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class SqlService {
     protected final String DEFAULT_DATABASE_URL;
     protected final String DEFAULT_DATABASE_USER;
     protected final String DEFAULT_DATABASE_PASSWORD;
-    protected final RestTemplate restTemplate;
 
     protected SqlService(String url,
                          String user,
-                         String password,
-                         RestTemplate restTemplate) {
+                         String password) {
         this.DEFAULT_DATABASE_URL = url;
         this.DEFAULT_DATABASE_USER = user;
         this.DEFAULT_DATABASE_PASSWORD = password;
-        this.restTemplate = restTemplate;
     }
 
     protected Connection createConnection(String databaseName) throws SQLException {
@@ -38,27 +37,6 @@ public abstract class SqlService {
         return exists;
     }
 
-    protected void deleteRow(String databaseName, String tableName, Long id) throws SQLException {
-        String deleteSql = String.format("DELETE FROM %s WHERE id = ?", tableName);
-        Connection deleteConnection = createConnection(databaseName);
-        PreparedStatement deleteStatement = deleteConnection.prepareStatement(deleteSql);
-        deleteStatement.setLong(1, id);
-        deleteStatement.executeUpdate();
-        deleteStatement.close();
-        deleteConnection.close();
-    }
 
-    protected void renameRow(String databaseName,
-                             String tableName,
-                             Long id,
-                             String newName) throws SQLException {
-        String renameSql = String.format("UPDATE %s SET name = ? WHERE id = ?", tableName);
-        Connection renameConnection = createConnection(databaseName);
-        PreparedStatement renameStatement = renameConnection.prepareStatement(renameSql);
-        renameStatement.setString(1, newName);
-        renameStatement.setLong(2, id);
-        renameStatement.executeUpdate();
-        renameStatement.close();
-        renameConnection.close();
-    }
+
 }

@@ -2,6 +2,7 @@ package com.project.org.service;
 
 import com.project.org.controller.dto.request.database.DatabaseCreateReqDTO;
 import com.project.org.controller.dto.request.database.DatabaseRenameReqDTO;
+import com.project.org.controller.dto.response.DefaultDatabaseResDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,21 +19,22 @@ public class DatabaseService extends SqlService{
     @Autowired
     public DatabaseService(@Value("${db.default.url}") String url,
                               @Value("${db.default.user}") String user,
-                              @Value("${db.default.password}") String password,
-                              RestTemplate restTemplate) {
-        super(url, user, password, restTemplate);
+                              @Value("${db.default.password}") String password) {
+        super(url, user, password);
     }
+
 
     public void createDatabaseIfNotExists(List<DatabaseCreateReqDTO> reqDTOs) throws SQLException, IOException {
         Connection createConnection = createConnection("postgres");
         for (DatabaseCreateReqDTO reqDTO : reqDTOs) {
-            String createSql = String.format("CREATE DATABASE %s", reqDTO.getName());
-            if (!doesDatabaseExist(reqDTO.getName())) {
+            String databaseName = reqDTO.getName().toLowerCase();
+            String createSql = String.format("CREATE DATABASE %s", databaseName);
+            if (!doesDatabaseExist(databaseName)) {
                 Statement createStatement = createConnection.createStatement();
                 createStatement.execute(createSql);
                 createStatement.close();
             }
-            initDatabase(reqDTO.getName());}
+            initDatabase(databaseName);}
 
         createConnection.close();
     }
@@ -40,7 +42,8 @@ public class DatabaseService extends SqlService{
     public void deleteDatabase(List<String> databaseNames) throws SQLException {
         Connection connection = createConnection("postgres");
         for (String databaseName : databaseNames) {
-            String deleteSql = String.format("DROP DATABASE %s", databaseName);
+            String deleteSql = String.format("DROP DATABASE %s", databaseName.toLowerCase());
+            databaseName = databaseName.toLowerCase();
             if (doesDatabaseExist(databaseName)) {
                 Statement deleteStatement = connection.createStatement();
                 deleteStatement.execute(deleteSql);
@@ -53,8 +56,8 @@ public class DatabaseService extends SqlService{
     public void renameDatabase(List<DatabaseRenameReqDTO> reqDTOS) throws SQLException {
         Connection renameConnection = createConnection("postgres");
         for (DatabaseRenameReqDTO reqDTO : reqDTOS) {
-            String oldName = reqDTO.getOldName();
-            String newName = reqDTO.getNewName();
+            String oldName = reqDTO.getOldName().toLowerCase();
+            String newName = reqDTO.getNewName().toLowerCase();
             String renameSql = String.format("ALTER DATABASE %s RENAME TO %s", oldName, newName);
             if (doesDatabaseExist(oldName) &&
                     !doesDatabaseExist(newName)) {

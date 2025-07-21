@@ -23,7 +23,7 @@ public class AccountController {
     }
 
     @GetMapping("")
-    public ResponseEntity getAccounts(@RequestParam("page") int page,
+    public ResponseEntity<List<DefaultAccountResDTO>> getAccounts(@RequestParam("page") int page,
                                       @RequestParam("size") int size,
                                       @RequestParam("databaseName") String databaseName,
                                       @RequestParam("portfolioId") Long portfolioId,

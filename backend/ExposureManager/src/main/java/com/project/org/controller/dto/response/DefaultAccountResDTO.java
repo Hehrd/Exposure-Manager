@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class DefaultAccountResDTO {
-    private String databaseName;
+    private Long id;
     private String name;
     private Long portfolioId;
 }

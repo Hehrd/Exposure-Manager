@@ -26,8 +26,9 @@ public class AccountController {
     public ResponseEntity getAccounts(@RequestParam("page") int page,
                                       @RequestParam("size") int size,
                                       @RequestParam("databaseName") String databaseName,
+                                      @RequestParam("portfolioId") Long portfolioId,
                                       @CookieValue("access_token") String jwt) throws NotFoundException {
-        return accountService.getAccounts(page, size, databaseName, jwt);
+        return accountService.getAccounts(page, size, databaseName, portfolioId, jwt);
     }
 
     @PostMapping("")

@@ -29,6 +29,7 @@ public class AccountService extends DataService{
     public ResponseEntity<List<DefaultAccountResDTO>> getAccounts(int page,
                                                                   int size,
                                                                   String databaseName,
+                                                                  Long portfolioId,
                                                                   String jwt) throws NotFoundException {
         String username = jwtService.extractUsername(jwt);
         Long userId = getUserId(username);
@@ -36,6 +37,7 @@ public class AccountService extends DataService{
                 .queryParam("page", page)
                 .queryParam("size", size)
                 .queryParam("databaseName", databaseName)
+                .queryParam("portfolioId", portfolioId)
                 .build()
                 .toUri();
         return sendReqToDatamanager(HttpMethod.GET, url, null, userId,

@@ -26,8 +26,9 @@ private final AccountService accountService;
     public ResponseEntity<List<DefaultAccountResDTO>> getAccounts(@RequestParam("page") int page,
                                                                   @RequestParam("size") int size,
                                                                   @RequestParam("databaseName") String databaseName,
+                                                                  @RequestParam("portfolioId") Long portfolioId,
                                                                   @CookieValue("ownerId") Long ownerId) throws SQLException {
-       List<DefaultAccountResDTO> accounts = accountService.getAccounts(page, size, databaseName, ownerId);
+       List<DefaultAccountResDTO> accounts = accountService.getAccounts(page, size, databaseName, portfolioId, ownerId);
        return ResponseEntity
                .status(HttpStatus.OK)
                .body(accounts);
@@ -38,7 +39,9 @@ private final AccountService accountService;
                                                  @RequestParam("databaseName") String databaseName,
                                                  @CookieValue("ownerId") Long ownerId) throws SQLException {
         accountService.createAccounts(accounts, databaseName, ownerId);
-        return ResponseEntity.ok("Success");
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .build();
     }
 
     @DeleteMapping("")

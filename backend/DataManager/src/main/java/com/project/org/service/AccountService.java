@@ -20,17 +20,18 @@ public class AccountService extends DataService<DefaultAccountResDTO> {
         super(url, user, password);
     }
 
-    public List<DefaultAccountResDTO> getAccounts(int page, int size, String databaseName,
+    public List<DefaultAccountResDTO> getAccounts(int page, int size, String databaseName, Long portfolioId,
                                                   Long ownerId) throws SQLException {
         if (doesDatabaseExist(databaseName)) {
             String selectSql = "SELECT * FROM accounts " +
-                    "WHERE owner_id = ? " +
+                    "WHERE portfolio_id = ? AND owner_id = ? " +
                     "LIMIT ? OFFSET ?";
             Connection selectConnection = createConnection(databaseName);
             PreparedStatement selectStatement = selectConnection.prepareStatement(selectSql);
-            selectStatement.setLong(1, ownerId);
-            selectStatement.setInt(2, size);
-            selectStatement.setInt(3, page);
+            selectStatement.setLong(1, portfolioId);
+            selectStatement.setLong(2, ownerId);
+            selectStatement.setInt(3, size);
+            selectStatement.setInt(4, page);
             return getRows(selectStatement.executeQuery());
         }
         return null;

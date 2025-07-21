@@ -12,6 +12,7 @@ export const getPortfolioContextMenuItems = (
       setRowData((prev) => [
         ...(prev || []),
         {
+          id: undefined,
           portfolioName: "NewPortfolio",
           ownerName: currentUsername,
           _isNew: true,
@@ -34,8 +35,9 @@ export const getPortfolioContextMenuItems = (
               ...(prev || []),
               {
                 ...data,
+                id: undefined,
                 _isNew: true,
-                _originalName: undefined,
+                _originalId: undefined,
               },
             ]);
           }
@@ -48,7 +50,7 @@ export const getPortfolioContextMenuItems = (
           if (data) {
             setRowData((prev) =>
               (prev || []).map((row) =>
-                row._originalName === data._originalName
+                row.id === data.id
                   ? { ...row, _isDeleted: true }
                   : row
               )

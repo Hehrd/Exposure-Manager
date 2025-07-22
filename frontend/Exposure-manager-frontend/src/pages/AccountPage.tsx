@@ -8,7 +8,7 @@ import {
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
-
+import { useAuth } from "../context/AuthContext";
 import AppWrapper from "../components/AppWrapper";
 import TableToolbar from "../components/TableToolbar";
 import { toast } from "react-toastify";
@@ -19,13 +19,14 @@ import type { AccountRow } from "../types/AccountRow";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const AccountLinkRenderer = ({ value }: { value: string }) => {
+const AccountLinkRenderer = ({ value, data }: { value: string; data: AccountRow }) => {
   const { databaseName, portfolioName, portfolioId } = useParams();
+
   return (
     <Link
       to={`/databases/${encodeURIComponent(databaseName!)}/portfolios/${encodeURIComponent(
         portfolioName!
-      )}/${encodeURIComponent(portfolioId!)}/accounts/${encodeURIComponent(value)}`}
+      )}/${encodeURIComponent(portfolioId!)}/accounts/${encodeURIComponent(value)}/${data.id}`}
       className="text-blue-600 dark:text-blue-400 hover:underline"
     >
       {value}
@@ -33,11 +34,12 @@ const AccountLinkRenderer = ({ value }: { value: string }) => {
   );
 };
 
+
 const AccountPage = () => {
   const gridRef = useRef<AgGridReact<AccountRow>>(null);
   const { portfolioId, databaseName, portfolioName } = useParams();
   const hasFetchedOnMount = useRef(false);
-
+  const { user } = useAuth();
   const [rowData, setRowData] = useState<AccountRow[] | null>(null);
 
   const [colDefs] = useState<ColDef<AccountRow>[]>([
@@ -65,24 +67,25 @@ const AccountPage = () => {
 
   useClickOutsideToStopEditing(gridRef);
 
-  const fetchAccounts = async () => {
-    console.log("📡 Fetching accounts...");
+  const fetchAccounts = async (page = 0, size = 20) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/accounts?portfolioId=${portfolioId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/accounts?page=${page}&size=${size}&databaseName=${databaseName}&portfolioId=${portfolioId}`,
         { credentials: "include" }
       );
 
       if (!res.ok) throw new Error("Failed to fetch accounts");
 
       const data = await res.json();
-      console.log("✅ Fetched accounts:", data.content);
+      console.log("✅ Fetched accounts:", data);
 
       setRowData(
-        (data.content || []).map((acc: any) => ({
-          accountName: acc.name,
-          ownerName: acc.ownerName,
-          _originalName: acc.name,
+        Object.values(data || {}).map((p: any) => ({
+          id: p.id,
+          accountName: p.name,
+          ownerName: user || "Unknown",
+          _originalId: p.id,
+          _originalName: p.name,
         }))
       );
     } catch (err) {
@@ -92,6 +95,7 @@ const AccountPage = () => {
     }
   };
 
+
   useEffect(() => {
     if (!hasFetchedOnMount.current) {
       console.log("🚀 Initial fetch triggered");
@@ -100,76 +104,86 @@ const AccountPage = () => {
     }
   }, []);
 
-  const handleSaveChanges = async () => {
-    gridRef.current?.api.stopEditing();
-    const allData = rowData ?? [];
-    console.log("📝 All row data:", allData);
+const handleSaveChanges = async () => {
+  gridRef.current?.api.stopEditing();
+  const allData = rowData ?? [];
+  console.log("📝 All row data:", allData);
 
-    const newRows = allData.filter((row) => row._isNew);
-    const editedRows = allData.filter(
-      (row) =>
-        !row._isNew &&
-        row._originalName &&
-        row.accountName !== row._originalName
-    );
-    const deletedRows = allData.filter((row) => row._isDeleted && !row._isNew);
+  const newRows = allData.filter((row) => row._isNew);
+  const editedRows = allData.filter(
+    (row) =>
+      !row._isNew &&
+      row._originalId &&
+      row.id &&
+      row.accountName !== row._originalName
+  );
+  console.log('EDITED ROWS:', editedRows)
+  const deletedRows = allData.filter((row) => row._isDeleted && !row._isNew);
 
-    const createPayload = newRows.map((row) => ({
-      name: row.accountName,
-      portfolioId,
-    }));
+  const createPayload = newRows.map((row) => ({
+    name: row.accountName,
+    portfolioId,
+  }));
 
-    const updatePayload = editedRows.map((row) => ({
-      oldName: row._originalName!,
-      newName: row.accountName,
-      portfolioId,
-    }));
+  const updatePayload = editedRows.map((row) => ({
+    id: row.id,
+    name: row.accountName,
+    portfolioId,
+  }));
 
-    const deletePayload = deletedRows.map((row) => row.accountName);
+  const deletePayload = deletedRows.map((row) => row.id);
 
-    console.log("🆕 Create payload:", createPayload);
-    console.log("✏️ Update payload:", updatePayload);
-    console.log("🗑️ Delete payload:", deletePayload);
+  console.log("🆕 Create payload:", createPayload);
+  console.log("✏️ Update payload:", updatePayload);
+  console.log("🗑️ Delete payload:", deletePayload);
 
-    try {
-      if (createPayload.length > 0) {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/accounts`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(createPayload),
-        });
-        toast.success("Created accounts");
-      }
-
-      if (updatePayload.length > 0) {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/accounts`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(updatePayload),
-        });
-        toast.success("Updated accounts");
-      }
-
-      if (deletePayload.length > 0) {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/accounts`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(deletePayload),
-        });
-        toast.success("Deleted accounts");
-      }
-
-      console.log("💾 Save complete. Refreshing...");
-      fetchAccounts();
-      toast.success("Account table saved");
-    } catch (err) {
-      console.error("❌ Error saving changes:", err);
-      toast.error("Save failed");
+  try {
+    // CREATE
+    if (createPayload.length > 0) {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/accounts?databaseName=${databaseName}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(createPayload),
+      });
+      if (!res.ok) throw new Error("Create failed");
+      toast.success("Created accounts");
     }
-  };
+
+    // UPDATE
+    if (updatePayload.length > 0) {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/accounts?databaseName=${databaseName}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(updatePayload),
+      });
+      if (!res.ok) throw new Error("Update failed");
+      toast.success("Updated accounts");
+    }
+
+    // DELETE
+    if (deletePayload.length > 0) {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/accounts?databaseName=${databaseName}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(deletePayload),
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      toast.success("Deleted accounts");
+    }
+
+    console.log("💾 Save complete. Refreshing...");
+    fetchAccounts();
+    toast.success("Account table saved");
+  } catch (err) {
+    console.error("❌ Error saving changes:", err);
+    toast.error("Save failed");
+  }
+};
+
+
 
   const handleRefresh = () => {
     gridRef.current?.api.stopEditing();
@@ -198,7 +212,9 @@ const AccountPage = () => {
           pagination={true}
           columnHoverHighlight={false}
           suppressRowHoverHighlight={true}
-          getContextMenuItems={getAccountContextMenuItems(setRowData, "Unknown")}
+          getContextMenuItems={(params) =>
+            getAccountContextMenuItems(setRowData, user || "Unknown")(params)
+          }
           overlayLoadingTemplate={
             '<span class="ag-overlay-loading-center">Loading accounts...</span>'
           }

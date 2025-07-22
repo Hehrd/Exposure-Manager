@@ -80,6 +80,7 @@ const PortfolioPage = () => {
       if (!res.ok) throw new Error("Failed to fetch portfolios");
 
       const data = await res.json();
+      console.log(data)
       setRowData(
         Object.values(data || {}).map((p: any) => ({
           id: p.id,
@@ -211,7 +212,9 @@ const PortfolioPage = () => {
           pagination={true}
           columnHoverHighlight={false}
           suppressRowHoverHighlight={true}
-          getContextMenuItems={getPortfolioContextMenuItems(setRowData, user || "Unknown")}
+          getContextMenuItems={(params) =>
+            getPortfolioContextMenuItems(setRowData, user || "Unknown")(params)
+          }
           overlayLoadingTemplate={
             '<span class="ag-overlay-loading-center">Loading portfolios...</span>'
           }

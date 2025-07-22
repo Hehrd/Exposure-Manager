@@ -22,7 +22,7 @@ const Home = () => {
   const location = useLocation();
   const gridRef = useRef<AgGridReact<DatabaseRow>>(null);
   const hasFetchedOnMount = useRef(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   const pathSegments = location.pathname.split("/").filter(Boolean);
   const rawTableName = pathSegments[pathSegments.length - 1];
@@ -42,7 +42,7 @@ const Home = () => {
       field: "ownerName",
       headerName: "Owner Name",
       flex: 1,
-      editable: false, // Make it read-only
+      editable: false,
     },
   ]);
 
@@ -72,7 +72,6 @@ const Home = () => {
           _originalName: db.name,
         }))
       );
-
     } catch (err) {
       console.error(err);
       toast.error("Failed to load databases");
@@ -91,7 +90,6 @@ const Home = () => {
     gridRef.current?.api.stopEditing();
     const allData = rowData ?? [];
 
-
     const newRows = allData.filter((row) => row._isNew);
     const editedRows = allData.filter(
       (row) =>
@@ -100,7 +98,6 @@ const Home = () => {
         row.databaseName !== row._originalName
     );
 
-    // === CREATE ===
     const createPayload = newRows.map((row) => ({
       name: row.databaseName,
     }));
@@ -122,14 +119,12 @@ const Home = () => {
       }
     }
 
-    // === EDIT ===
     const updatePayload = editedRows.map((row) => ({
       oldName: row._originalName!,
       newName: row.databaseName,
     }));
 
     if (updatePayload.length > 0) {
-      console.log(JSON.stringify(updatePayload))
       try {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/databases`, {
           method: "PUT",
@@ -145,16 +140,11 @@ const Home = () => {
         toast.error("Update failed");
       }
     }
-    
-    // === DELETE ===
+
     const deletedRows = allData.filter((row) => row._isDeleted && !row._isNew);
     const deletePayload = deletedRows.map((row) => row.databaseName);
 
-    console.log(' deleted payload: ', deletePayload)
-    console.log('deleted rows: ', deletedRows)
     if (deletePayload.length > 0) {
-      console.log("ALOOOOOOOOOOO")
-      console.log(deletePayload)
       try {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/databases`, {
           method: "DELETE",
@@ -171,11 +161,9 @@ const Home = () => {
       }
     }
 
-    console.log("Saved:", { createPayload, updatePayload, deletePayload });
     toast.success("Database table saved");
-    fetchDatabases(); // Refresh table
+    fetchDatabases();
   };
-
 
   const handleRefresh = () => {
     gridRef.current?.api.stopEditing();
@@ -184,6 +172,7 @@ const Home = () => {
   };
 
   useKeyboardShortcuts(handleSaveChanges, handleRefresh);
+
 
   return (
     <AppWrapper>
@@ -203,7 +192,9 @@ const Home = () => {
           pagination={true}
           columnHoverHighlight={false}
           suppressRowHoverHighlight={true}
-          getContextMenuItems={getDatabaseContextMenuItems(setRowData, user || "Unknown")}
+          getContextMenuItems={(params) =>
+            getDatabaseContextMenuItems(setRowData, user || "Unknown")(params)
+          }
           overlayLoadingTemplate={
             '<span class="ag-overlay-loading-center">Loading databases...</span>'
           }

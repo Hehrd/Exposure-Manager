@@ -2,19 +2,16 @@ package com.project.org.service;
 
 import com.project.org.controller.dto.request.ReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioCreateReqDTO;
-import com.project.org.controller.dto.request.portfolio.PortfolioDeleteReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPortfolioResDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -58,9 +55,7 @@ public class PortfolioService extends DataService<DefaultPortfolioResDTO> {
 
     public void deletePortfolio(List<Long> portfolioIds, String databaseName) throws SQLException {
         if (doesDatabaseExist(databaseName)) {
-            for (Long portfolioId : portfolioIds) {
-                deleteRow(databaseName, "portfolios", portfolioId);
-            }
+                deleteRows(databaseName, "portfolios", portfolioIds);
         }
     }
 

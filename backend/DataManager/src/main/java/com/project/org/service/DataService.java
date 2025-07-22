@@ -27,13 +27,18 @@ public abstract class DataService<T> extends SqlService{
 
     protected abstract T getRow(ResultSet rs) throws SQLException;
 
-    protected void deleteRow(String databaseName, String tableName, Long id) throws SQLException {
+
+
+    protected void deleteRows(String databaseName, String tableName, List<Long> ids) throws SQLException {
         String deleteSql = String.format("DELETE FROM %s WHERE id = ?", tableName);
         Connection deleteConnection = createConnection(databaseName);
-        PreparedStatement deleteStatement = deleteConnection.prepareStatement(deleteSql);
-        deleteStatement.setLong(1, id);
-        deleteStatement.executeUpdate();
-        deleteStatement.close();
+        for (Long id : ids) {
+            PreparedStatement deleteStatement = deleteConnection.prepareStatement(deleteSql);
+            deleteStatement.setLong(1, id);
+            deleteStatement.executeUpdate();
+            deleteStatement.close();
+        }
+
         deleteConnection.close();
     }
 

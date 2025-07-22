@@ -48,11 +48,7 @@ public class AccountService extends DataService<DefaultAccountResDTO> {
 
     public void deleteAccount(List<Long> accIds, String databaseName) throws SQLException {
         if (doesDatabaseExist(databaseName)) {
-            for (Long accId : accIds) {
-                deleteRow(databaseName,
-                        "accounts",
-                        accId);
-            }
+            deleteRows(databaseName, "accounts", accIds);
         }
     }
 

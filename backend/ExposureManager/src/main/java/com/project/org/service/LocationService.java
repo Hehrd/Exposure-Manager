@@ -3,6 +3,7 @@ package com.project.org.service;
 import com.project.org.controller.dto.request.location.LocationCreateReqDTO;
 import com.project.org.controller.dto.request.location.LocationUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultLocationResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.persistence.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +27,11 @@ public class LocationService extends DataService {
         super(restTemplate, jwtService, userRepository, "http://localhost:19000/locations");
     }
 
-    public ResponseEntity<List<DefaultLocationResDTO>> getLocations(int page,
-                                                                    int size,
-                                                                    String databaseName,
-                                                                    Long accountId,
-                                                                    String jwt) throws NotFoundException {
+    public ResponseEntity<PagedResponse<DefaultLocationResDTO>> getLocations(int page,
+                                                                             int size,
+                                                                             String databaseName,
+                                                                             Long accountId,
+                                                                             String jwt) throws NotFoundException {
         String username = jwtService.extractUsername(jwt);
         Long userId = getUserId(username);
         URI url = UriComponentsBuilder.fromUriString(DATA_MANAGER_URL)
@@ -41,7 +42,7 @@ public class LocationService extends DataService {
                 .build()
                 .toUri();
         return sendReqToDatamanager(HttpMethod.GET, url, null, userId,
-                new ParameterizedTypeReference<List<DefaultLocationResDTO>>() {});
+                new ParameterizedTypeReference<PagedResponse<DefaultLocationResDTO>>() {});
     }
 
     public ResponseEntity<Void> createLocations(List<LocationCreateReqDTO> locations,

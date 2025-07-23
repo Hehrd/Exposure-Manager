@@ -2,6 +2,8 @@ package com.project.org.controller;
 
 import com.project.org.controller.dto.request.portfolio.PortfolioCreateReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioUpdateReqDTO;
+import com.project.org.controller.dto.response.DefaultPortfolioResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.service.PortfolioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +24,10 @@ public class PortfolioController {
     }
 
     @GetMapping("")
-    public ResponseEntity getPortfolios(@RequestParam(required = true, name = "page") int page,
-                                        @RequestParam(required = true, name = "size") int size,
-                                        @RequestParam(required = true, name = "databaseName") String databaseName,
-                                        @CookieValue("access_token") String jwt) throws NotFoundException {
+    public ResponseEntity<PagedResponse<DefaultPortfolioResDTO>> getPortfolios(@RequestParam(required = true, name = "page") int page,
+                                                                               @RequestParam(required = true, name = "size") int size,
+                                                                               @RequestParam(required = true, name = "databaseName") String databaseName,
+                                                                               @CookieValue("access_token") String jwt) throws NotFoundException {
         return portfolioService.getPortfolios(page, size, databaseName.toLowerCase(), jwt);
     }
 

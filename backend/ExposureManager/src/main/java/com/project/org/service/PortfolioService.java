@@ -3,6 +3,7 @@ package com.project.org.service;
 import com.project.org.controller.dto.request.portfolio.PortfolioCreateReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPortfolioResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.persistence.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +31,10 @@ public class PortfolioService extends DataService {
                 "http://localhost:19000/portfolios");
     }
 
-    public ResponseEntity<List<DefaultPortfolioResDTO>> getPortfolios(int page,
-                                                                      int size,
-                                                                      String databaseName,
-                                                                      String jwt) throws NotFoundException {
+    public ResponseEntity<PagedResponse<DefaultPortfolioResDTO>> getPortfolios(int page,
+                                                                               int size,
+                                                                               String databaseName,
+                                                                               String jwt) throws NotFoundException {
         String username = jwtService.extractUsername(jwt);
         Long userId = getUserId(username);
         URI url = UriComponentsBuilder
@@ -44,7 +45,7 @@ public class PortfolioService extends DataService {
                 .build()
                 .toUri();
         return sendReqToDatamanager(HttpMethod.GET, url, null, userId,
-                new ParameterizedTypeReference<List<DefaultPortfolioResDTO>>() {});
+                new ParameterizedTypeReference<PagedResponse<DefaultPortfolioResDTO>>() {});
     }
 
     public ResponseEntity<Void> createPortfolios(List<PortfolioCreateReqDTO> portfolios,

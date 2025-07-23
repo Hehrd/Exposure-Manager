@@ -4,7 +4,7 @@ import com.project.org.persistence.entity.enums.Roles;
 import lombok.Data;
 
 @Data
-public class DefaultUserResDTO {
+public class DefaultUserResDTO implements ResDTO{
     private Long id;
     private String username;
     private Roles role;

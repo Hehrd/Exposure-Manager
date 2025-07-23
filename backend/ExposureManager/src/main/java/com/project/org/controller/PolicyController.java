@@ -3,6 +3,7 @@ package com.project.org.controller;
 import com.project.org.controller.dto.request.policy.PolicyCreateReqDTO;
 import com.project.org.controller.dto.request.policy.PolicyUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPolicyResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.service.PolicyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +25,11 @@ public class PolicyController {
 
 
     @GetMapping("")
-    public ResponseEntity<List<DefaultPolicyResDTO>> getPolicies(@RequestParam("page") int page,
-                                                                 @RequestParam("size") int size,
-                                                                 @RequestParam("databaseName") String databaseName,
-                                                                 @RequestParam("accountId") Long accountId,
-                                                                 @CookieValue("access_token") String jwt) throws NotFoundException {
+    public ResponseEntity<PagedResponse<DefaultPolicyResDTO>> getPolicies(@RequestParam("page") int page,
+                                                                          @RequestParam("size") int size,
+                                                                          @RequestParam("databaseName") String databaseName,
+                                                                          @RequestParam("accountId") Long accountId,
+                                                                          @CookieValue("access_token") String jwt) throws NotFoundException {
         return policyService.getPolicies(page, size, databaseName, accountId, jwt);
     }
 

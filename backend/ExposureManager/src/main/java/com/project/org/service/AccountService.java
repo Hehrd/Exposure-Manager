@@ -3,6 +3,7 @@ package com.project.org.service;
 import com.project.org.controller.dto.request.account.AccountCreateReqDTO;
 import com.project.org.controller.dto.request.account.AccountUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultAccountResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.persistence.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class AccountService extends DataService{
         super(restTemplate, jwtService, userRepository, "http://localhost:19000/accounts");
     }
 
-    public ResponseEntity<List<DefaultAccountResDTO>> getAccounts(int page,
+    public ResponseEntity<PagedResponse<DefaultAccountResDTO>> getAccounts(int page,
                                                                   int size,
                                                                   String databaseName,
                                                                   Long portfolioId,
@@ -41,7 +42,7 @@ public class AccountService extends DataService{
                 .build()
                 .toUri();
         return sendReqToDatamanager(HttpMethod.GET, url, null, userId,
-                new ParameterizedTypeReference<List<DefaultAccountResDTO>>() {});
+                new ParameterizedTypeReference<PagedResponse<DefaultAccountResDTO>>() {});
     }
 
     public ResponseEntity<Void> createAccounts(List<AccountCreateReqDTO> accounts,

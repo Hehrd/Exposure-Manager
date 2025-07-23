@@ -3,6 +3,7 @@ package com.project.org.controller;
 import com.project.org.controller.dto.request.location.LocationCreateReqDTO;
 import com.project.org.controller.dto.request.location.LocationUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultLocationResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +24,11 @@ public class LocationController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<DefaultLocationResDTO>> getLocations(@RequestParam("page") int page,
-                                                                    @RequestParam("size") int size,
-                                                                    @RequestParam("databaseName") String databaseName,
-                                                                    @RequestParam("accountId") Long accountId,
-                                                                    @CookieValue("access_token") String jwt) throws NotFoundException {
+    public ResponseEntity<PagedResponse<DefaultLocationResDTO>> getLocations(@RequestParam("page") int page,
+                                                                             @RequestParam("size") int size,
+                                                                             @RequestParam("databaseName") String databaseName,
+                                                                             @RequestParam("accountId") Long accountId,
+                                                                             @CookieValue("access_token") String jwt) throws NotFoundException {
         return locationService.getLocations(page, size, databaseName, accountId, jwt);
     }
 

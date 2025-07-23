@@ -1,11 +1,9 @@
 package com.project.org.service;
 
 import com.project.org.controller.dto.request.ReqDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,19 +13,28 @@ public abstract class DataService<T> extends SqlService{
         super(url, user, password);
     }
 
-    protected List<T> getRows(ResultSet rs) throws SQLException {
-        List<T> rows = new ArrayList<>();
+    protected PagedResponse<T> getRows(ResultSet rs, PreparedStatement countStatement) throws SQLException {
+        PagedResponse<T> pagedResponse = new PagedResponse<>();
         while (rs.next()) {
             T row = getRow(rs);
-            rows.add(row);
+            pagedResponse.addElement(row);
         }
+        Connection connection = rs.getStatement().getConnection();
         rs.close();
-        return rows;
+        int totalElements = getTotalElements(countStatement);
+        pagedResponse.setTotalElements(totalElements);
+        return pagedResponse;
     }
 
     protected abstract T getRow(ResultSet rs) throws SQLException;
 
-
+    private int getTotalElements(PreparedStatement countStatement) throws SQLException {
+        ResultSet rs = countStatement.executeQuery();
+        rs.next();
+        int totalElements = rs.getInt("count");
+        rs.close();
+        return totalElements;
+    }
 
     protected void deleteRows(String databaseName, String tableName, List<Long> ids) throws SQLException {
         String deleteSql = String.format("DELETE FROM %s WHERE id = ?", tableName);

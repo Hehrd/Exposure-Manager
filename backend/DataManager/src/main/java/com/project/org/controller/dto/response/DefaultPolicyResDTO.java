@@ -5,7 +5,7 @@ import lombok.Data;
 import java.sql.Date;
 
 @Data
-public class DefaultPolicyResDTO {
+public class DefaultPolicyResDTO implements ResDTO {
     private Long id;
     private String name;
     private Date startDate;

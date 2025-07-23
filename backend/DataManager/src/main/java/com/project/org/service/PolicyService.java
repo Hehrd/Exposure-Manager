@@ -5,6 +5,7 @@ import com.project.org.controller.dto.request.policy.PolicyCreateReqDTO;
 import com.project.org.controller.dto.request.policy.PolicyDeleteReqDTO;
 import com.project.org.controller.dto.request.policy.PolicyUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPolicyResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,23 +26,33 @@ public class PolicyService extends DataService<DefaultPolicyResDTO> {
         super(url, user, password);
     }
 
-    public List<DefaultPolicyResDTO> getPolicies(int page,
+    public PagedResponse<DefaultPolicyResDTO> getPolicies(int page,
                                                  int size,
                                                  String databaseName,
                                                  Long accountId,
                                                  Long ownerId) throws SQLException {
         if (doesDatabaseExist(databaseName)) {
-            String selectSql = "SELECT * FROM policies " +
-                    "JOIN accounts ON policies.account_id = accounts.id " +
-                    "WHERE policies.account_id = ? AND accounts.owner_id = ? " +
-                    "LIMIT ? OFFSET ?";
+            String whereClause = "JOIN accounts ON policies.account_id = accounts.id " +
+                    "WHERE policies.account_id = ? AND accounts.owner_id = ?";
+            String selectSql = String.format("SELECT * FROM policies %s LIMIT ? OFFSET ?", whereClause);
+            String countSql = String.format("SELECT COUNT(*) FROM policies %s", whereClause);
             Connection selectConnection = createConnection(databaseName);
             PreparedStatement selectStatement = selectConnection.prepareStatement(selectSql);
             selectStatement.setLong(1, accountId);
             selectStatement.setLong(2, ownerId);
             selectStatement.setInt(3, size);
             selectStatement.setInt(4, page);
-            return getRows(selectStatement.executeQuery());
+
+            PreparedStatement countStatement = selectConnection.prepareStatement(countSql);
+            countStatement.setLong(1, accountId);
+            countStatement.setLong(2, ownerId);
+
+
+            PagedResponse<DefaultPolicyResDTO> pagedResponse =
+                    getRows(selectStatement.executeQuery(), countStatement);
+            pagedResponse.setPageNumber(page);
+            pagedResponse.setPageSize(size);
+            return pagedResponse;
         }
         return null;
     }

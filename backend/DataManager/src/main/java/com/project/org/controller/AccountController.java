@@ -3,6 +3,7 @@ package com.project.org.controller;
 import com.project.org.controller.dto.request.account.AccountCreateReqDTO;
 import com.project.org.controller.dto.request.account.AccountUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultAccountResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,12 +24,12 @@ private final AccountService accountService;
     }
 
     @GetMapping("")
-    public ResponseEntity<List<DefaultAccountResDTO>> getAccounts(@RequestParam("page") int page,
+    public ResponseEntity<PagedResponse<DefaultAccountResDTO>> getAccounts(@RequestParam("page") int page,
                                                                   @RequestParam("size") int size,
                                                                   @RequestParam("databaseName") String databaseName,
                                                                   @RequestParam("portfolioId") Long portfolioId,
                                                                   @CookieValue("ownerId") Long ownerId) throws SQLException {
-       List<DefaultAccountResDTO> accounts = accountService.getAccounts(page, size, databaseName, portfolioId, ownerId);
+       PagedResponse<DefaultAccountResDTO> accounts = accountService.getAccounts(page, size, databaseName, portfolioId, ownerId);
        return ResponseEntity
                .status(HttpStatus.OK)
                .body(accounts);

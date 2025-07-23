@@ -3,6 +3,7 @@ package com.project.org.controller;
 import com.project.org.controller.dto.request.location.LocationCreateReqDTO;
 import com.project.org.controller.dto.request.location.LocationUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultLocationResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,16 +24,16 @@ public class LocationController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<DefaultLocationResDTO>> getLocations(@RequestParam("page") int page,
+    public ResponseEntity<PagedResponse<DefaultLocationResDTO>> getLocations(@RequestParam("page") int page,
                                                                     @RequestParam("size") int size,
                                                                     @RequestParam("databaseName") String databaseName,
                                                                     @RequestParam("accountId") Long accountId,
                                                                     @CookieValue("ownerId") Long ownerId) throws SQLException {
-        List<DefaultLocationResDTO> locations =
+        PagedResponse<DefaultLocationResDTO> pagedResponse =
                 locationService.getLocations(page, size, databaseName, accountId, ownerId);
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(locations);
+                .body(pagedResponse);
 
     }
 

@@ -4,6 +4,7 @@ import com.project.org.controller.dto.request.portfolio.PortfolioCreateReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioDeleteReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPortfolioResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.service.PortfolioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,11 +25,11 @@ public class PortfolioController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<DefaultPortfolioResDTO>> getPortfolios(@RequestParam("page") int page,
+    public ResponseEntity<PagedResponse<DefaultPortfolioResDTO>> getPortfolios(@RequestParam("page") int page,
                                                 @RequestParam("size") int size,
                                                 @RequestParam("databaseName") String databaseName,
                                                 @CookieValue("ownerId") Long ownerId) throws SQLException {
-        List<DefaultPortfolioResDTO> portfolios =
+        PagedResponse<DefaultPortfolioResDTO> portfolios =
                 portfolioService.getPortfolios(page, size, databaseName, ownerId);
         return ResponseEntity
                 .status(HttpStatus.OK)

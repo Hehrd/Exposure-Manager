@@ -4,6 +4,7 @@ import com.project.org.controller.dto.request.ReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioCreateReqDTO;
 import com.project.org.controller.dto.request.portfolio.PortfolioUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPortfolioResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,21 +25,29 @@ public class PortfolioService extends DataService<DefaultPortfolioResDTO> {
         super(url, user, password);
     }
 
-    public List<DefaultPortfolioResDTO> getPortfolios(int page,
-                                                      int size,
-                                                      String databaseName,
-                                                      Long ownerId) throws SQLException {
+    public PagedResponse<DefaultPortfolioResDTO> getPortfolios(int page,
+                                                               int size,
+                                                               String databaseName,
+                                                               Long ownerId) throws SQLException {
         if (doesDatabaseExist(databaseName)) {
-            String selectSql = "SELECT * FROM portfolios " +
-                        "WHERE owner_id = ? " +
-                        "LIMIT ? OFFSET ?";
+            String whereClause = "WHERE owner_id = ?";
+            String selectSql = String.format("SELECT * FROM portfolios %s LIMIT ? OFFSET ?", whereClause);
+            String countSql = String.format("SELECT COUNT(*) FROM portfolios %s", whereClause);
             Connection selectConnection = createConnection(databaseName);
             PreparedStatement selectStatement = selectConnection.prepareStatement(selectSql);
             selectStatement.setLong(1, ownerId);
             selectStatement.setInt(2, size);
             selectStatement.setInt(3, page);
-            ResultSet rs = selectStatement.executeQuery();
-            return getRows(rs);
+
+            PreparedStatement countStatement = selectConnection.prepareStatement(countSql);
+            countStatement.setLong(1, ownerId);
+
+
+            PagedResponse<DefaultPortfolioResDTO> pagedResponse =
+                    getRows(selectStatement.executeQuery(), countStatement);
+            pagedResponse.setPageNumber(page);
+            pagedResponse.setPageSize(size);
+            return pagedResponse;
         }
         return null;
     }

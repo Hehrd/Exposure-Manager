@@ -4,6 +4,7 @@ import com.project.org.controller.dto.request.ReqDTO;
 import com.project.org.controller.dto.request.location.LocationCreateReqDTO;
 import com.project.org.controller.dto.request.location.LocationUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultLocationResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,23 +25,32 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
         super(url, user, password);
     }
 
-    public List<DefaultLocationResDTO> getLocations(int page,
-                                                    int size,
-                                                    String databaseName,
-                                                    Long accountId,
-                                                    Long ownerId) throws SQLException {
+    public PagedResponse<DefaultLocationResDTO> getLocations(int page,
+                                                             int size,
+                                                             String databaseName,
+                                                             Long accountId,
+                                                             Long ownerId) throws SQLException {
         if (doesDatabaseExist(databaseName)) {
-            String selectSql = "SELECT * FROM locations " +
-                    "JOIN accounts ON locations.account_id = accounts.id " +
-                    "WHERE locations.account_id = ? AND accounts.owner_id = ? " +
-                    "LIMIT ? OFFSET ?";
+            String whereClause = "JOIN accounts ON locations.account_id = accounts.id " +
+                    "WHERE locations.account_id = ? AND accounts.owner_id = ?";
+            String selectSql = String.format("SELECT * FROM locations %s LIMIT ? OFFSET ?", whereClause);
+            String countSql = String.format("SELECT COUNT(*) FROM locations %s", whereClause);
             Connection selectConnection = createConnection(databaseName);
             PreparedStatement selectStatement = selectConnection.prepareStatement(selectSql);
             selectStatement.setLong(1, accountId);
             selectStatement.setLong(2, ownerId);
             selectStatement.setInt(3, size);
             selectStatement.setInt(4, page);
-            return getRows(selectStatement.executeQuery());
+
+            PreparedStatement countStatement = selectConnection.prepareStatement(countSql);
+            countStatement.setLong(1, accountId);
+            countStatement.setLong(2, ownerId);
+
+            PagedResponse<DefaultLocationResDTO> pagedResponse =
+                    getRows(selectStatement.executeQuery(), countStatement);
+            pagedResponse.setPageNumber(page);
+            pagedResponse.setPageSize(size);
+            return pagedResponse;
         }
         return null;
 

@@ -4,6 +4,7 @@ import com.project.org.controller.dto.request.policy.PolicyCreateReqDTO;
 import com.project.org.controller.dto.request.policy.PolicyDeleteReqDTO;
 import com.project.org.controller.dto.request.policy.PolicyUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPolicyResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
 import com.project.org.service.PolicyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,12 +25,12 @@ public class PolicyController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<DefaultPolicyResDTO>> getPolicies(@RequestParam("page") int page,
-                                                                 @RequestParam("size") int size,
-                                                                 @RequestParam("databaseName") String databaseName,
-                                                                 @RequestParam("accountId") Long accountId,
-                                                                 @CookieValue("ownerId") Long ownerId) throws SQLException {
-        List<DefaultPolicyResDTO> policies =
+    public ResponseEntity<PagedResponse<DefaultPolicyResDTO>> getPolicies(@RequestParam("page") int page,
+                                                                          @RequestParam("size") int size,
+                                                                          @RequestParam("databaseName") String databaseName,
+                                                                          @RequestParam("accountId") Long accountId,
+                                                                          @CookieValue("ownerId") Long ownerId) throws SQLException {
+        PagedResponse<DefaultPolicyResDTO> policies =
                 policyService.getPolicies(page, size, databaseName, accountId, ownerId);
         return ResponseEntity
                 .status(HttpStatus.OK)

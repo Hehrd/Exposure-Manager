@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
-import type { ColDef } from "ag-grid-community";
-import {
-  AllCommunityModule,
-  ModuleRegistry,
-} from "ag-grid-community";
+// PortfolioPage.tsx
+import React, { useEffect, useMemo, useRef } from "react";
+import { useParams, Link } from "react-router-dom";
+import type { ColDef, GridApi } from "ag-grid-community";
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
-import "../styles/EditableTable.css";
+import { AllEnterpriseModule } from "ag-grid-enterprise";
 
+import "../styles/EditableTable.css";
 import AppWrapper from "../components/AppWrapper";
 import TableToolbar from "../components/TableToolbar";
 import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
@@ -18,11 +17,10 @@ import { useAuth } from "../context/AuthContext";
 import type { PortfolioRow } from "../types/PortfolioRow";
 import { getPortfolioContextMenuItems } from "../menus/getPortfolioContextMenuItems";
 
-ModuleRegistry.registerModules([AllCommunityModule]);
+ModuleRegistry.registerModules([AllCommunityModule, AllEnterpriseModule]);
 
 const PortfolioLinkRenderer = ({ value, data }: { value: string; data: PortfolioRow }) => {
   const { databaseName } = useParams();
-
   return (
     <Link
       to={`/databases/${encodeURIComponent(databaseName!)}/portfolios/${encodeURIComponent(value)}/${data.id}`}
@@ -33,33 +31,30 @@ const PortfolioLinkRenderer = ({ value, data }: { value: string; data: Portfolio
   );
 };
 
-
 const PortfolioPage = () => {
-  const { databaseName } = useParams();
-  const location = useLocation();
-  const { user } = useAuth();
   const gridRef = useRef<AgGridReact<PortfolioRow>>(null);
-  const hasFetchedOnMount = useRef(false);
+  const { databaseName } = useParams();
+  const { user } = useAuth();
 
-  const pathSegments = location.pathname.split("/").filter(Boolean);
-  const rawTableName = pathSegments[pathSegments.length - 1];
-  const tableName = decodeURIComponent(rawTableName);
+  const created = useRef<PortfolioRow[]>([]);
+  const updated = useRef<PortfolioRow[]>([]);
+  const deleted = useRef<PortfolioRow[]>([]);
 
-  const [rowData, setRowData] = useState<PortfolioRow[] | null>(null);
-
-  const [colDefs] = useState<ColDef<PortfolioRow>[]>([{
-    field: "portfolioName",
-    headerName: "Portfolio Name",
-    flex: 1,
-    editable: true,
-    cellRenderer: PortfolioLinkRenderer,
-  },
-  {
-    field: "ownerName",
-    headerName: "Owner Name",
-    flex: 1,
-    editable: false,
-  }]);
+  const [colDefs] = React.useState<ColDef<PortfolioRow>[]>([
+    {
+      field: "portfolioName",
+      headerName: "Portfolio Name",
+      flex: 1,
+      editable: true,
+      cellRenderer: PortfolioLinkRenderer,
+    },
+    {
+      field: "ownerName",
+      headerName: "Owner Name",
+      flex: 1,
+      editable: false,
+    },
+  ]);
 
   const defaultColDef = useMemo<ColDef>(() => ({
     filter: true,
@@ -70,154 +65,139 @@ const PortfolioPage = () => {
 
   useClickOutsideToStopEditing(gridRef);
 
-  const fetchPortfolios = async (page = 0, size = 20) => {
-    try {
+  const serverSideDatasource = {
+    getRows: async (params: any) => {
+      const page = params.request.startRow / 20;
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=${page}&size=${size}&databaseName=${databaseName}`,
+        `${import.meta.env.VITE_BACKEND_URL}/portfolios?page=${page}&size=20&databaseName=${databaseName}`,
         { credentials: "include" }
       );
-
-      if (!res.ok) throw new Error("Failed to fetch portfolios");
-
       const data = await res.json();
-      console.log(data)
-      setRowData(
-        Object.values(data || {}).map((p: any) => ({
-          id: p.id,
-          portfolioName: p.name,
-          ownerName: user || "Unknown",
-          _originalId: p.id,
-          _originalName: p.name,
-        }))
-      );
-    } catch (err) {
-      console.error("❌ Error fetching portfolios:", err);
-      toast.error("Failed to load portfolios");
-      setRowData([]);
-    }
-  };
+      const items = Array.isArray(data) ? data : data.content;
+      const total = Array.isArray(data) ? items.length : data.totalElements;
 
-  useEffect(() => {
-    if (!hasFetchedOnMount.current) {
-      fetchPortfolios();
-      hasFetchedOnMount.current = true;
-    }
-  }, []);
+      const rows: PortfolioRow[] = items.map((p: any) => ({
+        id: p.id,
+        tempId: undefined,
+        portfolioName: p.name,
+        ownerName: user || "Unknown",
+        _originalId: p.id!,
+        _originalName: p.name,
+      }));
+
+      params.success({ rowData: rows, rowCount: total });
+    },
+  };
 
   const handleSaveChanges = async () => {
     gridRef.current?.api.stopEditing();
-    const allData = rowData ?? [];
 
-    const newRows = allData.filter((row) => row._isNew);
-    const editedRows = allData.filter(
-  (row) =>
-    !row._isNew &&
-    row._originalId &&
-    row.id &&
-    row.portfolioName !== row._originalName
-);
-
-    const deletedRows = allData.filter((row) => row._isDeleted && !row._isNew);
-
-    const createPayload = newRows.map((row) => ({
-      name: row.portfolioName,
-      databaseName,
-    }));
-
-    const updatePayload = editedRows.map((row) => ({
-      id: row.id,
-      name: row.portfolioName,
-      databaseName,
-    }));
-
-    const deletePayload = deletedRows.map((row) => row.id);
-
-    if (createPayload.length > 0) {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios?databaseName=${databaseName}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(createPayload),
-        });
+    try {
+      if (created.current.length) {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/portfolios?databaseName=${databaseName}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              created.current.map((r) => ({ name: r.portfolioName }))
+            ),
+          }
+        );
         if (!res.ok) throw new Error("Create failed");
-        toast.success("New portfolios created");
-      } catch (err) {
-        console.error(err);
-        toast.error("Create failed");
       }
-    }
 
-    if (updatePayload.length > 0) {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios?databaseName=${databaseName}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(updatePayload),
-        });
-        console.log('WHAT I SENT!!!!!!', JSON.stringify(updatePayload))
+      if (updated.current.length) {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/portfolios?databaseName=${databaseName}`,
+          {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(
+              updated.current.map((r) => ({
+                id: r.id,
+                name: r.portfolioName,
+              }))
+            ),
+          }
+        );
         if (!res.ok) throw new Error("Update failed");
-        toast.success("Portfolio names updated");
-      } catch (err) {
-        console.error(err);
-        toast.error("Update failed");
       }
-    }
 
-    if (deletePayload.length > 0) {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/portfolios?databaseName=${databaseName}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(deletePayload),
-        });
+      if (deleted.current.length) {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/portfolios?databaseName=${databaseName}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(deleted.current.map((r) => r.id)),
+          }
+        );
         if (!res.ok) throw new Error("Delete failed");
-        toast.success("Deleted portfolios");
-      } catch (err) {
-        console.error(err);
-        toast.error("Delete failed");
       }
+
+      created.current = [];
+      updated.current = [];
+      deleted.current = [];
+      gridRef.current?.api.refreshServerSide({ purge: true });
+      toast.success("Portfolio table saved");
+    } catch (err) {
+      console.error("❌ Save failed:", err);
+      toast.error("Save failed");
     }
-
-    console.log("✅ Saved:", { createPayload, updatePayload, deletePayload });
-    toast.success("Portfolio table saved");
-    fetchPortfolios();
   };
 
-  const handleRefresh = () => {
-    gridRef.current?.api.stopEditing();
-    fetchPortfolios();
-    toast.info("Portfolio table refreshed");
-  };
-
-  useKeyboardShortcuts(handleSaveChanges, handleRefresh);
+  useKeyboardShortcuts(
+    () => handleSaveChanges(),
+    () => gridRef.current?.api.refreshServerSide({ purge: true })
+  );
 
   return (
     <AppWrapper>
       <TableToolbar
-        tableName={tableName}
+        tableName="Portfolios"
         onSave={handleSaveChanges}
-        onRefresh={handleRefresh}
+        onRefresh={() => gridRef.current?.api.refreshServerSide({ purge: true })}
       />
 
-      <div id="custom-grid-wrapper" style={{ width: "100%", height: "85vh" }}>
+      <div style={{ width: "100%", height: "85vh" }}>
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"
-          rowData={(rowData ?? []).filter((row) => !row._isDeleted)}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
-          pagination={true}
-          columnHoverHighlight={false}
+          getRowId={(params) =>
+            params.data.id != null ? params.data.id.toString() : params.data.tempId!
+          }
+          rowModelType="serverSide"
+          pagination
+          paginationPageSize={20}
+          cacheBlockSize={20}
+          serverSideDatasource={serverSideDatasource}
+          animateRows={false}
           suppressRowHoverHighlight={true}
+          columnHoverHighlight={false}
           getContextMenuItems={(params) =>
-            getPortfolioContextMenuItems(setRowData, user || "Unknown")(params)
+            getPortfolioContextMenuItems(
+              gridRef.current!.api!,
+              user!,
+              created,
+              updated,
+              deleted
+            )(params)
           }
-          overlayLoadingTemplate={
-            '<span class="ag-overlay-loading-center">Loading portfolios...</span>'
-          }
+          onCellValueChanged={(params) => {
+            const row = params.data;
+            if (!row._isNew && row.id) {
+              const already = updated.current.find((r) => r.id === row.id);
+              if (!already) {
+                updated.current.push(row);
+              }
+            }
+          }}
         />
       </div>
     </AppWrapper>

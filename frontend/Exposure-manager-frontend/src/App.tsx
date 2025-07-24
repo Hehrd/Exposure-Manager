@@ -6,8 +6,8 @@ import Dashboard from './pages/Dashboard';
 import TablePage from './pages/TablePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppWrapper from './components/AppWrapper';
-import DatabasePage from './pages/DatabasePage'; 
-import PortfolioPage from './pages/PortfolioPage'; 
+import DatabasePage from './pages/DatabasePage';
+import PortfolioPage from './pages/PortfolioPage';
 import AccountPage from './pages/AccountPage';
 import LocationsAndPoliciesPage from './pages/LocationsAndPoliciesPage';
 import LocationPage from './pages/LocationPage';
@@ -34,38 +34,42 @@ function App() {
       }}
     >
       <Routes>
-        <Route path="/" element={<DatabasePage />} />
+        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/table" element={<TablePage />} />
-        <Route path="/settings" element={<Navigate to="/settings/account" replace />} />
-        <Route path="/settings/appearance" element={<SettingsAppearancePage />} />
-        <Route path="/settings/account" element={<SettingsAccountPage />} />
 
+        {/* Protected Routes */}
         <Route
-          path="/dashboard"
+          path="*"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Routes>
+                <Route path="/" element={<DatabasePage />} />
+                <Route path="/table" element={<TablePage />} />
+                <Route path="/settings" element={<Navigate to="/settings/account" replace />} />
+                <Route path="/settings/appearance" element={<SettingsAppearancePage />} />
+                <Route path="/settings/account" element={<SettingsAccountPage />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/databases/:databaseName" element={<PortfolioPage />} />
+                <Route
+                  path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId"
+                  element={<AccountPage />}
+                />
+                <Route
+                  path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId"
+                  element={<LocationsAndPoliciesPage />}
+                />
+                <Route
+                  path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId/locations/:locationName/:locationId"
+                  element={<LocationPage />}
+                />
+                <Route
+                  path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId/policies/:policyName/:policyId"
+                  element={<PolicyPage />}
+                />
+              </Routes>
             </ProtectedRoute>
           }
-        />
-        <Route path="/databases/:databaseName" element={<PortfolioPage />} />
-        <Route
-          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId"
-          element={<AccountPage />}
-        />
-        <Route
-          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId"
-          element={<LocationsAndPoliciesPage />}
-        />
-        <Route
-          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId/locations/:locationName/:locationId"
-          element={<LocationPage />}
-        />
-        <Route
-          path="/databases/:databaseName/portfolios/:portfolioName/:portfolioId/accounts/:accountName/:accountId/policies/:policyName/:policyId"
-          element={<PolicyPage />}
         />
       </Routes>
 

@@ -178,6 +178,8 @@ const PortfolioPage = () => {
           cacheBlockSize={20}
           serverSideDatasource={serverSideDatasource}
           animateRows={false}
+          undoRedoCellEditing={true}
+          undoRedoCellEditingLimit={20}
           suppressRowHoverHighlight={true}
           columnHoverHighlight={false}
           getContextMenuItems={(params) =>

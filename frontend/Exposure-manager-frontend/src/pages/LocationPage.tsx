@@ -1,9 +1,9 @@
-// LocationPage.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+// src/pages/LocationPage.tsx
+import React, { useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { AgGridReact } from "ag-grid-react";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, GridApi } from "ag-grid-community";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
 import TableToolbar from "../components/TableToolbar";
@@ -11,187 +11,202 @@ import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEdit
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
-import { getLocationContextMenuItems } from "../menus/getLocationContextMenuItems";
 import type { LocationRow } from "../types/LocationRow";
+import { getLocationContextMenuItems } from "../menus/getLocationContextMenuItems";
 
-import { ContextMenuModule } from "ag-grid-enterprise";
+ModuleRegistry.registerModules([AllCommunityModule]);
 
-ModuleRegistry.registerModules([AllCommunityModule, ContextMenuModule]);
-
-const LocationPage = () => {
+const LocationPage: React.FC = () => {
   const gridRef = useRef<AgGridReact<LocationRow>>(null);
-  const hasFetchedOnMount = useRef(false);
-  const { databaseName, accountId } = useParams();
+  const { databaseName, accountId } = useParams<{
+    databaseName: string;
+    accountId: string;
+  }>();
   const { user } = useAuth();
-  const [rowData, setRowData] = useState<LocationRow[] | null>(null);
 
-  const [colDefs] = useState<ColDef<LocationRow>[]>([{
-    field: "name", headerName: "Location Name", flex: 1, editable: true
-  }, {
-    field: "address", headerName: "Address", flex: 2, editable: true
-  }, {
-    field: "country", headerName: "Country", flex: 1, editable: true
-  }, {
-    field: "city", headerName: "City", flex: 1, editable: true
-  }, {
-    field: "zip", headerName: "Zip Code", flex: 1, editable: true
-  }]);
+  const created = useRef<LocationRow[]>([]);
+  const updated = useRef<LocationRow[]>([]);
+  const deleted = useRef<LocationRow[]>([]);
 
-  const defaultColDef = useMemo<ColDef>(() => ({
-    filter: true,
-    editable: true,
-    resizable: true,
-    minWidth: 100,
-  }), []);
+  const [colDefs] = React.useState<ColDef<LocationRow>[]>([
+    { field: "name", headerName: "Location Name", flex: 1, editable: true },
+    { field: "address", headerName: "Address", flex: 2, editable: true },
+    { field: "country", headerName: "Country", flex: 1, editable: true },
+    { field: "city", headerName: "City", flex: 1, editable: true },
+    { field: "zip", headerName: "Zip Code", flex: 1, editable: true },
+  ]);
+
+  const defaultColDef = useMemo<ColDef>(
+    () => ({
+      filter: true,
+      editable: true,
+      resizable: true,
+      minWidth: 100,
+    }),
+    []
+  );
 
   useClickOutsideToStopEditing(gridRef);
 
-  const fetchLocations = async (page = 0, size = 20) => {
-    console.log("🔍 [READ] Fetching locations...");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/locations?page=${page}&size=${size}&databaseName=${databaseName}&accountId=${accountId}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch locations");
-
-      const data = await res.json();
-      console.log("✅ [READ] Fetched locations:", data);
-
-      setRowData(
-        Object.values(data || {}).map((loc: any) => ({
-          id: loc.id,
-          name: loc.name,
-          address: loc.address,
-          country: loc.country,
-          city: loc.city,
-          zip: loc.zipCode,
-          accountId: Number(accountId),
-          _originalName: loc.name,
-          _isNew: false,
-          _isDeleted: false
-        }))
+  const serverSideDatasource = {
+    getRows: async (params: any) => {
+      const page = params.request.startRow / 20;
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/locations?page=${page}&size=20&databaseName=${databaseName}&accountId=${accountId}`,
+        { credentials: "include" }
       );
-    } catch (err) {
-      console.error("❌ [READ] Error fetching locations:", err);
-      toast.error("Failed to load locations");
-      setRowData([]);
-    }
-  };
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : data.content;
+      const total = Array.isArray(data) ? items.length : data.totalElements;
 
-  useEffect(() => {
-    if (!hasFetchedOnMount.current) {
-      fetchLocations();
-      hasFetchedOnMount.current = true;
-    }
-  }, []);
+      const rows: LocationRow[] = items.map((loc: any) => ({
+        id: loc.id,
+        tempId: undefined,
+        name: loc.name,
+        address: loc.address,
+        country: loc.country,
+        city: loc.city,
+        zip: String(loc.zipCode),
+        accountId: Number(accountId),
+        _originalName: loc.name,
+        _originalAddress: loc.address,
+        _originalCountry: loc.country,
+        _originalCity: loc.city,
+        _originalZip: String(loc.zipCode),
+      }));
+
+      params.success({ rowData: rows, rowCount: total });
+    },
+  };
 
   const handleSaveChanges = async () => {
     gridRef.current?.api.stopEditing();
-    const allData = rowData ?? [];
-    const newRows = allData.filter((r) => r._isNew);
-    const editedRows = allData.filter((r) => !r._isNew && !r._isDeleted && r.name !== r._originalName);
-    const deletedRows = allData.filter((r) => r._isDeleted && !r._isNew);
-
-    const createPayload = newRows.map((r) => ({
-      name: r.name,
-      address: r.address,
-      country: r.country,
-      city: r.city,
-      zipCode: Number(r.zip),
-      accountId: Number(accountId)
-    }));
-
-    const updatePayload = editedRows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      address: r.address,
-      country: r.country,
-      city: r.city,
-      zipCode: Number(r.zip),
-      accountId: Number(accountId)
-    }));
-
-    const deletePayload = deletedRows.map((r) => r.id);
 
     try {
-      if (createPayload.length > 0) {
-        console.log("📦 [CREATE] Sending payload:", createPayload);
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/locations?databaseName=${databaseName}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(createPayload),
-        });
+      // CREATE
+      if (created.current.length) {
+        const payload = created.current.map(r => ({
+          name: r.name,
+          address: r.address,
+          country: r.country,
+          city: r.city,
+          zipCode: Number(r.zip),
+          accountId: Number(accountId),
+        }));
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/locations?databaseName=${databaseName}`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
         if (!res.ok) throw new Error("Create failed");
-        toast.success("Created locations");
       }
 
-      if (updatePayload.length > 0) {
-        console.log("✏️ [UPDATE] Sending payload:", updatePayload);
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/locations?databaseName=${databaseName}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(updatePayload),
-        });
+      // UPDATE
+      if (updated.current.length) {
+        const payload = updated.current.map(r => ({
+          id: r.id,
+          name: r.name,
+          address: r.address,
+          country: r.country,
+          city: r.city,
+          zipCode: Number(r.zip),
+          accountId: Number(accountId),
+        }));
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/locations?databaseName=${databaseName}`,
+          {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
         if (!res.ok) throw new Error("Update failed");
-        toast.success("Updated locations");
       }
 
-      if (deletePayload.length > 0) {
-        console.log("🗑️ [DELETE] Sending payload:", deletePayload);
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/locations?databaseName=${databaseName}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(deletePayload),
-        });
+      // DELETE
+      if (deleted.current.length) {
+        const payload = deleted.current.map(r => r.id);
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/locations?databaseName=${databaseName}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
         if (!res.ok) throw new Error("Delete failed");
-        toast.success("Deleted locations");
       }
 
-      console.log("🔁 Refreshing after save");
-      fetchLocations();
+      // reset and refresh
+      created.current = [];
+      updated.current = [];
+      deleted.current = [];
+      gridRef.current?.api.refreshServerSide({ purge: true });
       toast.success("Location table saved");
     } catch (err) {
-      console.error("❌ [SAVE] Error saving changes:", err);
+      console.error("❌ Save failed:", err);
       toast.error("Save failed");
     }
   };
 
-  const handleRefresh = () => {
-    gridRef.current?.api.stopEditing();
-    console.log("🔄 Manual refresh triggered");
-    fetchLocations();
-    toast.info("Location table refreshed");
-  };
+  useKeyboardShortcuts(
+    () => handleSaveChanges(),
+    () => gridRef.current?.api.refreshServerSide({ purge: true })
+  );
 
-  useKeyboardShortcuts(handleSaveChanges, handleRefresh);
-
-  return (<>
+  return (
+    <>
       <TableToolbar
         tableName="Locations"
         onSave={handleSaveChanges}
-        onRefresh={handleRefresh}
+        onRefresh={() => gridRef.current?.api.refreshServerSide({ purge: true })}
       />
-
-      <div id="custom-grid-wrapper" style={{ width: "100%", height: "85vh" }}>
+      <div style={{ width: "100%", height: "85vh" }}>
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"
-          rowData={(rowData ?? []).filter((row) => !row._isDeleted)}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
-          pagination={true}
+          getRowId={params =>
+            params.data.id != null
+              ? params.data.id.toString()
+              : params.data.tempId!
+          }
+          rowModelType="serverSide"
+          pagination
+          paginationPageSize={20}
+          cacheBlockSize={20}
+          serverSideDatasource={serverSideDatasource}
+          animateRows={false}
+          undoRedoCellEditing
+          undoRedoCellEditingLimit={20}
+          suppressRowHoverHighlight
           columnHoverHighlight={false}
-          suppressRowHoverHighlight={true}
-          getContextMenuItems={(params) =>
-            getLocationContextMenuItems(setRowData, user?.toString() || "Unknown")(params)
+          getContextMenuItems={params =>
+            getLocationContextMenuItems(
+              gridRef.current!.api!,
+              user || "Unknown",
+              created,
+              updated,
+              deleted
+            )(params)
           }
-          overlayLoadingTemplate={
-            '<span class="ag-overlay-loading-center">Loading locations...</span>'
-          }
+          onCellValueChanged={params => {
+            const row = params.data as LocationRow;
+            if (!row._isNew && row.id != null) {
+              const exists = updated.current.find(r => r.id === row.id);
+              if (!exists) updated.current.push(row);
+            }
+          }}
         />
       </div>
-      </>
+    </>
   );
 };
 

@@ -1,6 +1,7 @@
 // getPortfolioContextMenuItems.ts
 import type { GridApi, GetContextMenuItemsParams, MenuItemDef } from "ag-grid-community";
 import type { PortfolioRow } from "../types/PortfolioRow";
+import { toast } from "react-toastify";
 
 export const getPortfolioContextMenuItems = (
   gridApi: GridApi<PortfolioRow>,
@@ -34,6 +35,7 @@ export const getPortfolioContextMenuItems = (
         });
       }
     }, 0);
+    toast.success("New portfolio added to last page");
   };
 
   const duplicateRow = () => {

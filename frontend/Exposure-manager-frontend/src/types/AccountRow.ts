@@ -1,5 +1,7 @@
+// src/types/AccountRow.ts
 export interface AccountRow {
   id?: number;
+  tempId?: string;
   accountName: string;
   ownerName: string;
   _isNew?: boolean;

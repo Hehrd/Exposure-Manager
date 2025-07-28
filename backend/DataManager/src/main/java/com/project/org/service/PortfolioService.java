@@ -37,7 +37,7 @@ public class PortfolioService extends DataService<DefaultPortfolioResDTO> {
             PreparedStatement selectStatement = selectConnection.prepareStatement(selectSql);
             selectStatement.setLong(1, ownerId);
             selectStatement.setInt(2, size);
-            selectStatement.setInt(3, page);
+            selectStatement.setInt(3, page * size);
 
             PreparedStatement countStatement = selectConnection.prepareStatement(countSql);
             countStatement.setLong(1, ownerId);

@@ -32,7 +32,7 @@ public class AccountService extends DataService<DefaultAccountResDTO> {
             selectStatement.setLong(1, portfolioId);
             selectStatement.setLong(2, ownerId);
             selectStatement.setInt(3, size);
-            selectStatement.setInt(4, page);
+            selectStatement.setInt(4, page * size);
 
             PreparedStatement countStatement = selectConnection.prepareStatement(countSql);
             countStatement.setLong(1, portfolioId);

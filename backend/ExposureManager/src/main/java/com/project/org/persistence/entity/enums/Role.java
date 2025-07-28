@@ -1,13 +1,13 @@
 package com.project.org.persistence.entity.enums;
 
-public enum Roles {
+public enum Role {
     ADMIN,
     MODERATOR,
     USER;
 
 
-    public static Roles getRoleByText(String text) {
-        for (Roles role : Roles.values()) {
+    public static Role getRoleByText(String text) {
+        for (Role role : Role.values()) {
             if (role.toString().equalsIgnoreCase(text)) {
                 return role;
             }

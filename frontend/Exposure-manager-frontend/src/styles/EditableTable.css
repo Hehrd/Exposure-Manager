@@ -8,7 +8,10 @@
   background-color: var(--secondary-color);
   color: var(--text-color);
 }
-
+.ag-header-cell{
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+}
 /* Cells */
 #custom-grid-wrapper .ag-cell {
   background-color: var(--bg-color);
@@ -30,10 +33,10 @@
   background-color: var(--bg-color);
 }
 /* Hover and selected */
-#custom-grid-wrapper .ag-row-hover {
+#custom-grid-wrapper{
   background-color: rgba(0, 123, 255, 0.1);
 }
-[data-theme="dark"] #custom-grid-wrapper .ag-row-hover {
+[data-theme="dark"] #custom-grid-wrapper{
   background-color: rgba(78, 170, 255, 0.1);
 }
 
@@ -103,4 +106,25 @@
 }
 .ag-paging-panel{
   border-color: var(--primary-color);
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+}
+.ag-viewport{
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+.ag-row{
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+.ag-row-hover .ag-cell {
+  background-color: var(--row-hover) !important;
+   transition: none;
+}
+.ag-row-hover .ag-input-field-input{
+  background-color: var(--row-hover);
+  transition: none;
+}
+.ag-cell{
+  transition: none;
 }

@@ -6,6 +6,7 @@
   --primary-color: #007BFF;      
   --secondary-color: #e6f0ff;      
   --card-bg: #f5faff;
+  --row-hover: #fafcff;
   --search-filter: brightness(0) saturate(100%) invert(41%) sepia(78%) saturate(1342%) hue-rotate(189deg) brightness(98%) contrast(96%);
 
 }
@@ -17,6 +18,7 @@
   --primary-color: #4eaaff;     
   --secondary-color: #1c263b;      
   --card-bg: #1a2333;
+  --row-hover: #003e6d;
   --search-filter: brightness(0) saturate(100%) invert(79%) sepia(96%) saturate(368%) hue-rotate(175deg) brightness(103%) contrast(97%);
 
 }

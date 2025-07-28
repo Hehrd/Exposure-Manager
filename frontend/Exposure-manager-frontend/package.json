@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ag-grid-enterprise/server-side-row-model": "^32.3.5",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-table": "^8.21.3",
     "ag-grid-enterprise": "^34.0.0",

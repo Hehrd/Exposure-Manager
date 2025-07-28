@@ -22,7 +22,7 @@ html, body {
   height: fit-content;
   margin: 0;
 }
-* {
+*:not(.ag-input-field-input) {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 

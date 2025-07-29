@@ -8,6 +8,7 @@ import {
 
 interface AuthContextType {
   user: string | null;
+  role: string | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -15,6 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  role: null,
   loading: true,
   login: async () => {},
   logout: async () => {},
@@ -22,22 +24,26 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchUser = async () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/me`, {
-        credentials: 'include', // ⬅️ send the HttpOnly cookie
+        credentials: 'include',
       });
 
       if (!res.ok) {
         setUser(null);
+        setRole(null);
       } else {
-        const data = await res.json();
+        const data: { username: string; role: string } = await res.json();
         setUser(data.username);
+        setRole(data.role);
       }
     } catch {
       setUser(null);
+      setRole(null);
     } finally {
       setLoading(false);
     }
@@ -48,22 +54,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (username: string, password: string) => {
-    const body = {
-      username,
-      password,
-      role: 'ADMIN',
-    };
-
     const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      credentials: 'include', // ⬅️ important: let browser receive HttpOnly cookie
+      body: JSON.stringify({ username, password }),
+      credentials: 'include',
     });
 
-    if (!res.ok) throw new Error('Invalid credentials');
+    if (!res.ok) {
+      throw new Error('Invalid credentials');
+    }
 
-    await fetchUser(); // ⬅️ now you are authenticated via the cookie
+    const data: { username: string; role: string } = await res.json();
+    setUser(data.username);
+    setRole(data.role);
+    setLoading(false);
   };
 
   const logout = async () => {
@@ -73,10 +78,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     setUser(null);
+    setRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, role, loading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

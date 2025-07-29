@@ -186,7 +186,7 @@ const PolicyPage: React.FC = () => {
         onSave={handleSaveChanges}
         onRefresh={() => gridRef.current?.api.refreshServerSide({ purge: true })}
       />
-      <div style={{ width: "100%", height: "85vh" }}>
+      <div style={{ width: "100%", height: "90%" }}>
         <AgGridReact
           ref={gridRef}
           className="ag-theme-quartz"

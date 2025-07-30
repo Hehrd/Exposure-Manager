@@ -6,45 +6,45 @@ export default function Signup() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'MODERATOR' | 'ADMIN' | 'USER'>('USER');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (password !== confirmPassword) {
-    toast.error('Passwords do not match');
-    return;
-  }
-
-  const body = {
-    username,
-    password,
-    role: 'ADMIN',
-  };
-
-  try {
-    const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      credentials: 'include',
-    });
-
-    if (res.ok) {
-      toast.success('Account created! Redirecting...');
-      navigate('/login');
-    } else {
-      const errorText = await res.text();
-      toast.error(`Signup failed: ${errorText || 'Try again.'}`);
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
     }
-  } catch (err) {
-    toast.error('Network error. Please try again.');
-    console.error(err);
-  }
-};
 
+    const body = {
+      username,
+      password,
+      role,
+    };
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        toast.success('Account created! Redirecting...');
+        navigate('/login');
+      } else {
+        const errorText = await res.text();
+        toast.error(`Signup failed: ${errorText || 'Try again.'}`);
+      }
+    } catch (err) {
+      toast.error('Network error. Please try again.');
+      console.error(err);
+    }
+  };
 
   return (
     <form
@@ -79,6 +79,26 @@ export default function Signup() {
         required
         className="w-full p-3 mb-4 border border-[var(--primary-color)] rounded-[4px] bg-[var(--bg-color)] text-[var(--text-color)] placeholder:text-[#aaa] box-border"
       />
+
+      {/* Role Selection */}
+      <div className="mb-4">
+        <label className="block mb-2 text-[var(--text-color)] font-medium">Role</label>
+        <div className="flex space-x-4">
+          {(['MODERATOR', 'ADMIN', 'USER'] as const).map((r) => (
+            <label key={r} className="inline-flex items-center">
+              <input
+                type="radio"
+                name="role"
+                value={r}
+                checked={role === r}
+                onChange={() => setRole(r)}
+                className="form-radio text-[var(--primary-color)] mr-2"
+              />
+              <span className="text-[var(--text-color)]">{r}</span>
+            </label>
+          ))}
+        </div>
+      </div>
 
       <button
         type="submit"

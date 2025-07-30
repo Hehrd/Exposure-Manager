@@ -11,9 +11,7 @@ export const getAccountContextMenuItems = (
   deletedRef: React.RefObject<AccountRow[]>
 ) => (params: GetContextMenuItemsParams<AccountRow>): MenuItemDef[] => {
   const d = params.node?.data;
-
-  const genTempId = () =>
-    `temp-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  const genTempId = () => `temp-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
 
   const addRow = () => {
     const newRow: AccountRow = {
@@ -22,18 +20,16 @@ export const getAccountContextMenuItems = (
       ownerName: currentUsername,
       _isNew: true,
     };
-    createdRef.current.push(newRow);
-    gridApi.applyServerSideTransaction({ add: [newRow] });
+    createdRef.current.unshift(newRow);
+    // insert at the very top
+    gridApi.applyServerSideTransaction({ add: [newRow], addIndex: 0 });
     setTimeout(() => {
       const rowNode = gridApi.getRowNode(newRow.tempId!);
       if (rowNode) {
-        gridApi.startEditingCell({
-          rowIndex: rowNode.rowIndex!,
-          colKey: "accountName",
-        });
+        gridApi.startEditingCell({ rowIndex: rowNode.rowIndex!, colKey: "accountName" });
       }
     }, 0);
-    toast.success("New account added to last page");
+    toast.success("New account added at top");
   };
 
   const duplicateRow = () => {
@@ -44,18 +40,15 @@ export const getAccountContextMenuItems = (
       id: undefined,
       _isNew: true,
     };
-    createdRef.current.push(dup);
-    gridApi.applyServerSideTransaction({ add: [dup] });
+    createdRef.current.unshift(dup);
+    gridApi.applyServerSideTransaction({ add: [dup], addIndex: 0 });
     setTimeout(() => {
       const rowNode = gridApi.getRowNode(dup.tempId!);
       if (rowNode) {
-        gridApi.startEditingCell({
-          rowIndex: rowNode.rowIndex!,
-          colKey: "accountName",
-        });
+        gridApi.startEditingCell({ rowIndex: rowNode.rowIndex!, colKey: "accountName" });
       }
     }, 0);
-    toast.success("Account duplicated");
+    toast.success("Account duplicated at top");
   };
 
   const deleteRow = () => {
@@ -63,7 +56,6 @@ export const getAccountContextMenuItems = (
     if (d.id != null) {
       deletedRef.current.push(d);
     } else {
-      // If it was just created and never saved, remove from the created list
       createdRef.current = createdRef.current.filter(r => r.tempId !== d.tempId);
     }
     gridApi.applyServerSideTransaction({ remove: [d] });

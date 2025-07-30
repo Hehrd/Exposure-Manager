@@ -25,15 +25,16 @@ export const getLocationContextMenuItems = (
       zip: "",
       _isNew: true,
     };
-    createdRef.current.push(newRow);
-    gridApi.applyServerSideTransaction({ add: [newRow] });
+    // add to top
+    createdRef.current.unshift(newRow);
+    gridApi.applyServerSideTransaction({ add: [newRow], addIndex: 0 });
     setTimeout(() => {
       const node = gridApi.getRowNode(newRow.tempId!);
       if (node) {
         gridApi.startEditingCell({ rowIndex: node.rowIndex!, colKey: "name" });
       }
     }, 0);
-    toast.success("New location added");
+    toast.success("New location added at top");
   };
 
   const duplicateRow = () => {
@@ -43,28 +44,32 @@ export const getLocationContextMenuItems = (
       tempId: genTempId(),
       id: undefined,
       _isNew: true,
-      // clear original markers so edits count as new changes
       _originalName: undefined,
       _originalAddress: undefined,
       _originalCountry: undefined,
       _originalCity: undefined,
       _originalZip: undefined,
     };
-    createdRef.current.push(dup);
-    gridApi.applyServerSideTransaction({ add: [dup] });
+    // add to top
+    createdRef.current.unshift(dup);
+    gridApi.applyServerSideTransaction({ add: [dup], addIndex: 0 });
     setTimeout(() => {
       const node = gridApi.getRowNode(dup.tempId!);
       if (node) {
         gridApi.startEditingCell({ rowIndex: node.rowIndex!, colKey: "name" });
       }
     }, 0);
-    toast.success("Location duplicated");
+    toast.success("Location duplicated at top");
   };
 
   const deleteRow = () => {
     if (!d) return;
-    if (d.id != null) deletedRef.current.push(d);
-    else createdRef.current = createdRef.current.filter(r => r.tempId !== d.tempId);
+    if (d.id != null) {
+      deletedRef.current.push(d);
+    } else {
+      // remove unsaved
+      createdRef.current = createdRef.current.filter(r => r.tempId !== d.tempId);
+    }
     gridApi.applyServerSideTransaction({ remove: [d] });
     toast.info("Location removed");
   };

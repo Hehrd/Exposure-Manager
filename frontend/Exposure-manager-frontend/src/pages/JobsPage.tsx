@@ -1,5 +1,5 @@
 // src/pages/JobsPage.tsx
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo, useRef, useContext } from "react";
 import { AgGridReact } from "ag-grid-react";
 import {
   ModuleRegistry,
@@ -9,24 +9,28 @@ import {
   IServerSideGetRowsParams
 } from "ag-grid-community";
 import "ag-grid-enterprise";
+
 import AppWrapper from '../components/AppWrapper';
+import { ThemeContext } from "../context/ThemeContext";
+
 import type { DefaultJobResDTO } from "../types/JobRow";
 
 // Register the community modules once per app lifetime
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function JobsPage() {
+  const { displayType } = useContext(ThemeContext);
   const gridRef = useRef<AgGridReact<DefaultJobResDTO>>(null);
 
   // Column definitions matching your DTO
   const [colDefs] = React.useState<ColDef<DefaultJobResDTO>[]>([
-    { field: "name", headerName: "Job Name", flex: 1, filter: true },
+    { field: "name",        headerName: "Job Name", flex: 1, filter: true },
     {
       field: "timeStarted",
       headerName: "Started",
       flex: 1,
       filter: "agDateColumnFilter",
-      valueFormatter: (p) =>
+      valueFormatter: p =>
         p.value ? new Date(p.value).toLocaleString() : "",
     },
     {
@@ -34,10 +38,10 @@ export default function JobsPage() {
       headerName: "Finished",
       flex: 1,
       filter: "agDateColumnFilter",
-      valueFormatter: (p) =>
+      valueFormatter: p =>
         p.value ? new Date(p.value).toLocaleString() : "",
     },
-    { field: "status", headerName: "Status", flex: 1, filter: true },
+    { field: "status",      headerName: "Status",   flex: 1, filter: true },
   ]);
 
   // Default properties for all columns
@@ -82,29 +86,39 @@ export default function JobsPage() {
     params.api.setServerSideDatasource(serverSideDatasource);
   };
 
+  // Refresh function to reload from server
+  const handleRefresh = () => {
+    gridRef.current?.api.refreshServerSide({ purge: true });
+  };
+
   return (
     <AppWrapper>
-        <>
-        
-            <div
-                className="ag-theme-quartz "
-                style={{ width: "100%", height: "80vh" }}
-            >
-                <AgGridReact<DefaultJobResDTO>
-                ref={gridRef}
-                columnDefs={colDefs}
-                defaultColDef={defaultColDef}
-                rowModelType="serverSide"
-                pagination
-                paginationPageSize={20}
-                cacheBlockSize={20}
-                animateRows={false}
-                suppressRowHoverHighlight
-                columnHoverHighlight={false}
-                onGridReady={onGridReady}
-                />
-            </div>
-        </>
+      {/* Custom Toolbar */}
+      <div className="p-2 bg-white border-b border-gray-200 flex items-center">
+        <button
+          onClick={handleRefresh}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {/* AG-Grid */}
+      <div className="ag-theme-quartz" style={{ width: "100%", height: "80vh" }}>
+        <AgGridReact<DefaultJobResDTO>
+          ref={gridRef}
+          columnDefs={colDefs}
+          defaultColDef={defaultColDef}
+          rowModelType="serverSide"
+          pagination={displayType === "paginated"}
+          paginationPageSize={20}
+          cacheBlockSize={20}
+          animateRows={false}
+          suppressRowHoverHighlight
+          columnHoverHighlight={false}
+          onGridReady={onGridReady}
+        />
+      </div>
     </AppWrapper>
   );
 }

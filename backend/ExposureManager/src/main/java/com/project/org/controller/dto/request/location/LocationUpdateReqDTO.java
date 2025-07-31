@@ -16,7 +16,7 @@ public class LocationUpdateReqDTO {
     private String country;
     @NotBlank
     private String city;
-    @NotBlank
+    @NotNull
     private Integer zipCode;
     @NotNull
     private Long accountId;

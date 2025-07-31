@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRole(null);
       } else {
         const data: { username: string; role: string } = await res.json();
+        console.log(data)
         setUser(data.username);
         setRole(data.role);
       }
@@ -60,15 +61,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       body: JSON.stringify({ username, password }),
       credentials: 'include',
     });
-
     if (!res.ok) {
       throw new Error('Invalid credentials');
     }
 
-    const data: { username: string; role: string } = await res.json();
-    setUser(data.username);
-    setRole(data.role);
-    setLoading(false);
+    fetchUser()
   };
 
   const logout = async () => {

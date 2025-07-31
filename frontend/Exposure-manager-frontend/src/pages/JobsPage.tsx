@@ -4,10 +4,13 @@ import { AgGridReact } from "ag-grid-react";
 import {
   ModuleRegistry,
   AllCommunityModule,
+  
+} from "ag-grid-community";
+import type {
   ColDef,
   IServerSideDatasource,
   IServerSideGetRowsParams
-} from "ag-grid-community";
+} from "ag-grid-community"
 import "ag-grid-enterprise";
 
 import AppWrapper from '../components/AppWrapper';
@@ -50,7 +53,6 @@ export default function JobsPage() {
       resizable: true,
       sortable: true,
       minWidth: 120,
-      suppressMenuHide: true,
     }),
     []
   );
@@ -59,32 +61,43 @@ export default function JobsPage() {
   const serverSideDatasource: IServerSideDatasource = {
     getRows: async (params: IServerSideGetRowsParams) => {
       const { startRow, endRow } = params.request;
-      const page       = Math.floor(startRow / (endRow - startRow));
-      const size       = endRow - startRow;
+      const page       = Math.floor(startRow! / (endRow! - startRow!));
+      const size       = endRow! - startRow!;
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/jobs?page=${page}&size=${size}`,
+        { credentials: "include" }
+      );
 
+      // log status + headers
+      console.log("[JobsPage] fetch status:", res.status, "ok?", res.ok);
+      res.headers.forEach((value, key) => console.log(`  ${key}: ${value}`));
+
+      let payload: any;
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/jobs?page=${page}&size=${size}`,
-          { credentials: "include" }
-        );
-        const json: { content: DefaultJobResDTO[]; totalElements: number } =
-          await res.json();
-
-        params.success({
-          rowData: json.content,
-          rowCount: json.totalElements,
-        });
-      } catch (err) {
-        console.error("Failed to load jobs:", err);
-        params.fail();
+        // try to parse JSON
+        payload = await res.json();
+        console.log("[JobsPage] parsed JSON payload:", payload);
+      } catch (jsonErr) {
+        // if it's not valid JSON, dump as text
+        const text = await res.text();
+        console.error("[JobsPage] failed to parse JSON, raw text:", text);
+        throw jsonErr;
       }
+
+      if (!res.ok) {
+        console.error("[JobsPage] server responded with error:", payload);
+        params.fail();
+        return;
+      }
+
+      params.success({
+        rowData: payload.content,
+        rowCount: payload.totalElements,
+      });
+
     },
   };
 
-  // Once the grid is ready, register the SSRM datasource
-  const onGridReady = (params: any) => {
-    params.api.setServerSideDatasource(serverSideDatasource);
-  };
 
   // Refresh function to reload from server
   const handleRefresh = () => {
@@ -106,6 +119,7 @@ export default function JobsPage() {
       {/* AG-Grid */}
       <div className="ag-theme-quartz" style={{ width: "100%", height: "80vh" }}>
         <AgGridReact<DefaultJobResDTO>
+          serverSideDatasource={serverSideDatasource}
           ref={gridRef}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
@@ -116,7 +130,6 @@ export default function JobsPage() {
           animateRows={false}
           suppressRowHoverHighlight
           columnHoverHighlight={false}
-          onGridReady={onGridReady}
         />
       </div>
     </AppWrapper>

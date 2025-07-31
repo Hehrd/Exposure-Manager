@@ -1,6 +1,7 @@
 // getPortfolioContextMenuItems.ts
 import type { GridApi, GetContextMenuItemsParams, MenuItemDef } from "ag-grid-community";
 import type { PortfolioRow } from "../types/PortfolioRow";
+import { toast } from "react-toastify";
 
 export const getPortfolioContextMenuItems = (
   gridApi: GridApi<PortfolioRow>,
@@ -22,59 +23,64 @@ export const getPortfolioContextMenuItems = (
       _isNew: true,
     };
 
-    createdRef.current.push(newRow);
-    gridApi.applyServerSideTransaction({ add: [newRow] });
+    createdRef.current.unshift(newRow);
+    gridApi.applyServerSideTransaction({ add: [newRow], addIndex: 0 });
 
+    // start editing the new row immediately
     setTimeout(() => {
-      const rowNode = gridApi.getRowNode(newRow.tempId!);
-      if (rowNode) {
+      const node = gridApi.getRowNode(newRow.tempId!);
+      if (node) {
         gridApi.startEditingCell({
-          rowIndex: rowNode.rowIndex!,
+          rowIndex: node.rowIndex!,
           colKey: "portfolioName",
         });
       }
     }, 0);
+
+    toast.success("New portfolio added at top");
   };
 
   const duplicateRow = () => {
-    if (d) {
-      const dup: PortfolioRow = {
-        ...d,
-        tempId: genTempId(),
-        id: undefined,
-        _isNew: true,
-      };
+    if (!d) return;
+    const dup: PortfolioRow = {
+      ...d,
+      tempId: genTempId(),
+      id: undefined,
+      _isNew: true,
+    };
 
-      createdRef.current.push(dup);
-      gridApi.applyServerSideTransaction({ add: [dup] });
+    createdRef.current.unshift(dup);
+    gridApi.applyServerSideTransaction({ add: [dup], addIndex: 0 });
 
-      setTimeout(() => {
-        const rowNode = gridApi.getRowNode(dup.tempId!);
-        if (rowNode) {
-          gridApi.startEditingCell({
-            rowIndex: rowNode.rowIndex!,
-            colKey: "portfolioName",
-          });
-        }
-      }, 0);
-    }
+    setTimeout(() => {
+      const node = gridApi.getRowNode(dup.tempId!);
+      if (node) {
+        gridApi.startEditingCell({
+          rowIndex: node.rowIndex!,
+          colKey: "portfolioName",
+        });
+      }
+    }, 0);
+
+    toast.success("Portfolio duplicated at top");
   };
 
   const deleteRow = () => {
-    if (d) {
-      if (d.id) {
-        deletedRef.current.push(d);
-      } else {
-        createdRef.current = {
-          current: createdRef.current.filter((r) => r.tempId !== d.tempId),
-        } as any;
-      }
-      gridApi.applyServerSideTransaction({ remove: [d] });
+    if (!d) return;
+    if (d.id) {
+      deletedRef.current.push(d);
+    } else {
+      createdRef.current = createdRef.current.filter(r => r.tempId !== d.tempId);
     }
+    gridApi.applyServerSideTransaction({ remove: [d] });
+    toast.info("Portfolio removed");
   };
 
+  // when no row is under cursor, only show Add
   if (!d) {
-    return [{ name: "➕ Add Portfolio", action: addRow }];
+    return [
+      { name: "➕ Add Portfolio", action: addRow },
+    ];
   }
 
   return [

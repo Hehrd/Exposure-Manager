@@ -141,18 +141,34 @@ export default function AppWrapper({ children }: WrapperProps) {
               ref={profileRef}
               className="absolute top-[120%] right-0 w-[220px] min-h-[120px] bg-[var(--card-bg)] text-[var(--text-color)] border border-[var(--primary-color)] rounded-lg p-4 shadow-[0_4px_12px_rgba(0,0,0,0.2)] z-[1000] flex flex-col gap-3"
             >
-              <button
-                onClick={() => {
-                  setProfileOpen(false);
-                  navigate('/settings/account');
-                }}
-                className="w-full text-left text-sm flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary-color)] text-[var(--text-color)] hover:opacity-90 transition-all"
-              >
-                <img src={gearIcon} alt="Settings" className="w-4 h-4" />
-                Settings
-              </button>
-                <hr className='border-[var(--primary-color)]'/>
-              <LogoutButton />
+              {/* inside your profile dropdown */}
+            <button
+              onClick={() => {
+                setProfileOpen(false);
+                navigate('/settings/account');
+              }}
+              className="w-full text-left text-sm flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary-color)] text-[var(--text-color)] hover:opacity-90 transition-all"
+            >
+              <img src={gearIcon} alt="Settings" className="w-4 h-4" />
+              Settings
+            </button>
+
+            <button
+              onClick={() => {
+                setProfileOpen(false);
+                navigate('/jobs');
+              }}
+              className="w-full text-left text-sm flex items-center gap-2 px-4 py-2 rounded-md bg-[var(--primary-color)] text-[var(--text-color)] hover:opacity-90 transition-all"
+            >
+              {/* replace with your Jobs icon if you have one */}
+              <span className="w-4 h-4 inline-block" />
+              Jobs
+            </button>
+
+            <hr className="border-[var(--primary-color)]" />
+
+            <LogoutButton />
+
             </div>
           )}
 

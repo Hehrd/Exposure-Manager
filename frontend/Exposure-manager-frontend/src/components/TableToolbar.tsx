@@ -14,7 +14,7 @@ export default function TableToolbar({
   onRefresh,
 }: TableToolbarProps) {
   return (
-         <div className="px-6 py-4 flex justify-between items-center">
+         <div className="px-6 py-4 flex justify-between items-center h-10%">
         <h1 className="text-xl font-semibold text-[var(--primary-color)] ">
           {tableName}
         </h1>

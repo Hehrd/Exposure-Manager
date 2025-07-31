@@ -1,41 +1,48 @@
-// PolicyPage.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useContext } from "react";
 import { useParams } from "react-router-dom";
-import { AgGridReact } from "ag-grid-react";
 import type { ColDef } from "ag-grid-community";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import { ContextMenuModule } from "ag-grid-enterprise";
+import { AgGridReact } from "ag-grid-react";
 import "ag-grid-enterprise";
 import "../styles/EditableTable.css";
 import TableToolbar from "../components/TableToolbar";
 import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { toast } from "react-toastify";
-import { getPolicyContextMenuItems } from "../menus/getPolicyContextMenuItems";
 import type { PolicyRow } from "../types/PolicyRow";
+import { getPolicyContextMenuItems } from "../menus/getPolicyContextMenuItems";
+import { ThemeContext } from "../context/ThemeContext";
 
-ModuleRegistry.registerModules([AllCommunityModule, ContextMenuModule]);
+ModuleRegistry.registerModules([AllCommunityModule]);
 
-const PolicyPage = () => {
+const PolicyPage: React.FC = () => {
+  const { displayType } = useContext(ThemeContext);
   const gridRef = useRef<AgGridReact<PolicyRow>>(null);
-  const hasFetchedOnMount = useRef(false);
-  const { databaseName, accountId } = useParams();
-  const [rowData, setRowData] = useState<PolicyRow[] | null>(null);
+  const { databaseName, accountId } = useParams<{ databaseName: string; accountId: string }>();
 
-  const [colDefs] = useState<ColDef<PolicyRow>[]>([{
-    field: "name", headerName: "Policy Name", flex: 2, editable: true
-  }, {
-    field: "startDate", headerName: "Start Date", flex: 1, editable: true
-  }, {
-    field: "expirationDate", headerName: "expiration Date", flex: 1, editable: true
-  }, {
-    field: "coverage", headerName: "Coverage $", flex: 1, editable: true,
-    valueFormatter: (params) => `$${Number(params.value).toLocaleString()}`
-  }, {
-    field: "perilType", headerName: "Peril Type", flex: 1, editable: true
-  }]);
+  const created = useRef<PolicyRow[]>([]);
+  const updated = useRef<PolicyRow[]>([]);
+  const deleted = useRef<PolicyRow[]>([]);
 
-  const defaultColDef = useMemo<ColDef>(() => ({
+  // any cell in a _isNew row gets red text
+  const cellClassRules = { "text-red-600 dark:text-red-400": "data._isNew" };
+
+  const [colDefs] = React.useState<ColDef<PolicyRow>[]>([
+    { field: "name",             headerName: "Policy Name",     flex: 2, editable: true, cellClassRules },
+    { field: "startDate",        headerName: "Start Date",      flex: 1, editable: true, cellClassRules },
+    { field: "expirationDate",   headerName: "Expiration Date", flex: 1, editable: true, cellClassRules },
+    {
+      field: "coverage",
+      headerName: "Coverage $",
+      flex: 1,
+      editable: true,
+      valueFormatter: params => `$${Number(params.value).toLocaleString()}`,
+      cellClassRules
+    },
+    { field: "perilType",        headerName: "Peril Type",      flex: 1, editable: true, cellClassRules },
+  ]);
+
+  const defaultColDef = useMemo<ColDef<PolicyRow>>(() => ({
     filter: true,
     editable: true,
     resizable: true,
@@ -44,119 +51,148 @@ const PolicyPage = () => {
 
   useClickOutsideToStopEditing(gridRef);
 
-  const fetchPolicies = async () => {
-    console.log("🔍 [READ] Fetching policies...");
-    try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/policies?page=0&size=20&databaseName=${databaseName}&accountId=${accountId}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch policies");
-      const data = await res.json();
-      console.log("✅ [READ] Fetched policies:", data);
-      setRowData((data || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        startDate: p.startDate,
-        expirationDate: p.expirationDate,
-        coverage: p.coverage,
-        perilType: p.perilType,
-        _originalName: p.name,
-        _isNew: false,
-        _isDeleted: false
-      })));
-    } catch (err) {
-      console.error("❌ [READ] Error fetching policies:", err);
-      toast.error("Failed to load policies");
-      setRowData([]);
-    }
-  };
-
-  useEffect(() => {
-    if (!hasFetchedOnMount.current && databaseName && accountId) {
-      console.log("🚀 Initial fetch triggered for policies");
-      fetchPolicies();
-      hasFetchedOnMount.current = true;
-    }
-  }, [databaseName, accountId]);
-
   const handleSaveChanges = async () => {
     gridRef.current?.api.stopEditing();
-    const allData = rowData ?? [];
-    const newRows = allData.filter((r) => r._isNew);
-    const editedRows = allData.filter((r) => !r._isNew && !r._isDeleted && r.name !== r._originalName);
-    const deletedRows = allData.filter((r) => r._isDeleted && !r._isNew);
-
-    const createPayload = newRows.map((r) => ({
-      name: r.name,
-      startDate: r.startDate,
-      expirationDate: r.expirationDate,
-      coverage: r.coverage,
-      perilType: r.perilType,
-      accountId: Number(accountId),
-    }));
-
-    const updatePayload = editedRows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      startDate: r.startDate,
-      expirationDate: r.expirationDate,
-      coverage: r.coverage,
-      perilType: r.perilType,
-      accountId: Number(accountId),
-    }));
-
-    const deletePayload = deletedRows.map((r) => r.id);
-
     try {
-      if (createPayload.length > 0) {
-        console.log("📦 [CREATE] Sending payload:", createPayload);
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/policies?databaseName=${databaseName}`, {
+      const baseUrl = `${import.meta.env.VITE_BACKEND_URL}/policies?databaseName=${databaseName}`;
+
+      // CREATE
+      if (created.current.length) {
+        const payload = created.current.map(r => ({
+          name: r.name,
+          startDate: r.startDate,
+          expirationDate: r.expirationDate,
+          coverage: r.coverage,
+          perilType: r.perilType,
+          accountId: Number(accountId),
+        }));
+        const res = await fetch(baseUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(createPayload),
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Create failed");
-        toast.success("Created policies");
       }
 
-      if (updatePayload.length > 0) {
-        console.log("✏️ [UPDATE] Sending payload:", updatePayload);
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/policies?databaseName=${databaseName}`, {
+      // UPDATE
+      if (updated.current.length) {
+        const payload = updated.current.map(r => ({
+          id: r.id,
+          name: r.name,
+          startDate: r.startDate,
+          expirationDate: r.expirationDate,
+          coverage: r.coverage,
+          perilType: r.perilType,
+          accountId: Number(accountId),
+        }));
+        const res = await fetch(baseUrl, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(updatePayload),
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Update failed");
-        toast.success("Updated policies");
       }
 
-      if (deletePayload.length > 0) {
-        console.log("🗑️ [DELETE] Sending payload:", deletePayload);
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/policies?databaseName=${databaseName}`, {
+      // DELETE
+      if (deleted.current.length) {
+        const payload = deleted.current.map(r => r.id);
+        const res = await fetch(baseUrl, {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify(deletePayload),
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error("Delete failed");
-        toast.success("Deleted policies");
       }
 
-      fetchPolicies();
-      toast.success("Policy table saved");
+      // clear buffers
+      created.current = [];
+      updated.current = [];
+      deleted.current = [];
+      // purge if paginated, ensures unsaved rows disappear
+      gridRef.current?.api.refreshServerSide({ purge: displayType === "paginated" });
+      toast.success("Policies saved");
     } catch (err) {
-      console.error("❌ [SAVE] Error saving changes:", err);
+      console.error("❌ Save failed:", err);
       toast.error("Save failed");
     }
   };
 
   const handleRefresh = () => {
-    gridRef.current?.api.stopEditing();
-    fetchPolicies();
-    toast.info("Policy table refreshed");
+    // discard unsaved rows
+    created.current = [];
+    updated.current = [];
+    deleted.current = [];
+    gridRef.current?.api.refreshServerSide({ purge: true });
   };
 
-  useKeyboardShortcuts(handleSaveChanges, handleRefresh);
+  useKeyboardShortcuts(
+    () => handleSaveChanges(),
+    () => handleRefresh()
+  );
+
+  const serverSideDatasource = React.useMemo(() => ({
+    async getRows(params: any) {
+      const { startRow, endRow } = params.request;
+      const pageSize = endRow - startRow;
+      const pageIndex = Math.floor(startRow / pageSize);
+      const url =
+        `${import.meta.env.VITE_BACKEND_URL}/policies?page=${pageIndex}&size=${pageSize}` +
+        `&databaseName=${databaseName}&accountId=${accountId}`;
+
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+      const items       = Array.isArray(data) ? data : data.content;
+      const serverTotal = Array.isArray(data) ? items.length : data.totalElements;
+
+      // map server rows
+      const serverRows: PolicyRow[] = items.map((p: any) => ({
+        id: p.id,
+        tempId: undefined,
+        name: p.name,
+        startDate: p.startDate,
+        expirationDate: p.expirationDate,
+        coverage: p.coverage,
+        perilType: p.perilType,
+        accountId: Number(accountId),
+        _originalName: p.name,
+        _originalStartDate: p.startDate,
+        _originalExpirationDate: p.expirationDate,
+        _originalCoverage: p.coverage,
+        _originalPerilType: p.perilType,
+        _isNew: false,
+      }));
+
+      const pending = created.current;
+      const totalCount = serverTotal + pending.length;
+      let pageRows: PolicyRow[];
+
+      if (displayType === "infinite") {
+        // infinite: merge pending across pages
+        if ((pageIndex + 1)*pageSize <= serverTotal) {
+          pageRows = serverRows;
+        } else if (pageIndex*pageSize >= serverTotal) {
+          const start = pageIndex*pageSize - serverTotal;
+          pageRows = pending.slice(start, start+pageSize);
+        } else {
+          const remain = serverTotal - pageIndex*pageSize;
+          pageRows = [
+            ...serverRows.slice(0, remain),
+            ...pending.slice(0, pageSize-remain)
+          ];
+        }
+      } else {
+        // paginated: pending only on first page
+        pageRows = pageIndex === 0
+          ? [...pending, ...serverRows].slice(0, pageSize)
+          : serverRows;
+      }
+
+      params.success({ rowData: pageRows, rowCount: totalCount });
+    }
+  }), [databaseName, accountId, displayType]);
 
   return (
     <>
@@ -165,22 +201,41 @@ const PolicyPage = () => {
         onSave={handleSaveChanges}
         onRefresh={handleRefresh}
       />
-      <div id="custom-grid-wrapper" style={{ width: "100%", height: "85%" }}>
-        <AgGridReact
+      <div style={{ width: "100%", height: "90%" }}>
+        <AgGridReact<PolicyRow>
           ref={gridRef}
           className="ag-theme-quartz"
-          rowData={(rowData ?? []).filter((r) => !r._isDeleted)}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
-          pagination={true}
-          columnHoverHighlight={false}
+          getRowId={params =>
+            params.data.id != null ? params.data.id.toString() : params.data.tempId!
+          }
+          rowModelType="serverSide"
+          pagination={displayType === "paginated"}
+          paginationPageSize={20}
+          cacheBlockSize={20}
+          serverSideDatasource={serverSideDatasource}
+          animateRows={false}
+          undoRedoCellEditing={true}
+          undoRedoCellEditingLimit={20}
           suppressRowHoverHighlight={true}
-          getContextMenuItems={(params) =>
-            getPolicyContextMenuItems(setRowData)(params)
+          columnHoverHighlight={false}
+          getContextMenuItems={params =>
+            getPolicyContextMenuItems(
+              gridRef.current!.api!,
+              created,
+              updated,
+              deleted
+            )(params)
           }
-          overlayLoadingTemplate={
-            '<span class="ag-overlay-loading-center">Loading policies...</span>'
-          }
+          onCellValueChanged={params => {
+            const row = params.data as PolicyRow;
+            if (!row._isNew && row.id != null) {
+              if (!updated.current.find(r => r.id === row.id)) {
+                updated.current.push(row);
+              }
+            }
+          }}
         />
       </div>
     </>

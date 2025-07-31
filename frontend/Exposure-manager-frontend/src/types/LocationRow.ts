@@ -1,5 +1,7 @@
+// src/types/LocationRow.ts
 export interface LocationRow {
   id?: number;
+  tempId?: string;
   name: string;
   address: string;
   country: string;
@@ -9,4 +11,8 @@ export interface LocationRow {
   _isNew?: boolean;
   _isDeleted?: boolean;
   _originalName?: string;
+  _originalAddress?: string;
+  _originalCountry?: string;
+  _originalCity?: string;
+  _originalZip?: string;
 }

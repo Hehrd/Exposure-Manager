@@ -14,6 +14,7 @@ import LocationPage from './pages/LocationPage';
 import PolicyPage from './pages/PolicyPage';
 import SettingsAppearancePage from './pages/SettingsAppearancePage';
 import SettingsAccountPage from './pages/SettingsAccountPage';
+import JobsPage from './pages/JobsPage';
 import { ToastContainer } from 'react-toastify';
 import { useContext } from 'react';
 import { ThemeContext } from './context/ThemeContext';
@@ -49,6 +50,7 @@ function App() {
                 <Route path="/settings" element={<Navigate to="/settings/account" replace />} />
                 <Route path="/settings/appearance" element={<SettingsAppearancePage />} />
                 <Route path="/settings/account" element={<SettingsAccountPage />} />
+                <Route path="/jobs" element={<JobsPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/databases/:databaseName" element={<PortfolioPage />} />
                 <Route

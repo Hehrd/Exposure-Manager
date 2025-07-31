@@ -8,7 +8,7 @@ const LocationsAndPoliciesPage = () => {
 
   return (
     <AppWrapper>
-      <div className="px-6 py-4">
+      <div>
         <div className="flex space-x-4 mb-4">
           <button
             onClick={() => setActiveTab("locations")}

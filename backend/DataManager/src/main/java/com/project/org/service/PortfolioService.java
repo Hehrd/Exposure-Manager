@@ -35,7 +35,7 @@ public class PortfolioService extends DataService<DefaultPortfolioResDTO> {
                                                                int size,
                                                                String databaseName,
                                                                String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection selectConnection = createConnection(databaseName);
         PreparedStatement selectStatement = selectConnection.prepareStatement(sqls.get("select"));
         selectStatement.setInt(1, size);
@@ -54,7 +54,7 @@ public class PortfolioService extends DataService<DefaultPortfolioResDTO> {
 
     public void createPortfolios(List<PortfolioCreateReqDTO> portfolios, String databaseName,
                                  Long jobId, String jwt) throws SQLException, DatabaseNotFoundException, InterruptedException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Long ownerId = jwtService.extractUserId(jwt);
         Connection createConnection = createConnection(databaseName);
         executeCreates(createConnection, portfolios, ownerId);
@@ -64,14 +64,14 @@ public class PortfolioService extends DataService<DefaultPortfolioResDTO> {
 
     public void deletePortfolio(List<Long> portfolioIds, String databaseName, Long jobId,
                                 String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         deleteRows(databaseName, "portfolios", portfolioIds);
         finishJob(jobId, jwt);
     }
 
     public void updatePortfolio(List<PortfolioUpdateReqDTO> portfolios, String databaseName, Long jobId,
                                 String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection updateConnection = createConnection(databaseName);
         executeUpdates(updateConnection, portfolios);
         updateConnection.close();

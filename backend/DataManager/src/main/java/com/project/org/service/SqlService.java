@@ -45,7 +45,7 @@ public abstract class SqlService {
                 DEFAULT_DATABASE_PASSWORD);
     }
 
-    protected void verifyDatabase(String databaseName) throws SQLException, DatabaseNotFoundException {
+    protected void verifyDatabase(String databaseName, boolean existsExpected) throws SQLException, DatabaseNotFoundException {
         Connection connection = createConnection("postgres");
         String checkSql = "SELECT 1 FROM pg_database WHERE datname = ?";
         PreparedStatement checkStatement = connection.prepareStatement(checkSql);
@@ -53,7 +53,7 @@ public abstract class SqlService {
         ResultSet rs = checkStatement.executeQuery();
         boolean exists = rs.next();
         checkStatement.close();
-        if (!exists) {
+        if (exists != existsExpected) {
             String msg = String.format("Database %s does not exist", databaseName);
             throw new DatabaseNotFoundException(msg);
         }

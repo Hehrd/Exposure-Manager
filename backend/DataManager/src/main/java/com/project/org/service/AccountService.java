@@ -29,7 +29,7 @@ public class AccountService extends DataService<DefaultAccountResDTO> {
 
     public PagedResponse<DefaultAccountResDTO> getAccounts(int page, int size, String databaseName, Long portfolioId,
                                                            String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection selectConnection = createConnection(databaseName);
         PreparedStatement selectStatement = selectConnection.prepareStatement(sqls.get("select"));
         selectStatement.setLong(1, portfolioId);
@@ -53,7 +53,7 @@ public class AccountService extends DataService<DefaultAccountResDTO> {
 
     public void createAccounts(List<AccountCreateReqDTO> accounts, String databaseName,
                                Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Long ownerId = jwtService.extractUserId(jwt);
         Connection createConnection = createConnection(databaseName);
         executeCreates(createConnection, accounts, ownerId);
@@ -62,13 +62,13 @@ public class AccountService extends DataService<DefaultAccountResDTO> {
     }
 
     public void deleteAccount(List<Long> accIds, String databaseName, Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         deleteRows(databaseName, "accounts", accIds);
         finishJob(jobId, jwt);
     }
     public void updateAccount(List<AccountUpdateReqDTO> accounts, String databaseName, Long jobId,
                               String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection updateConnection = createConnection(databaseName);
         executeUpdates(updateConnection, accounts);
         updateConnection.close();

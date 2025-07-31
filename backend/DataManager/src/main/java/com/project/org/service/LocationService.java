@@ -35,7 +35,7 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
                                                              String databaseName,
                                                              Long accountId,
                                                              String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection selectConnection = createConnection(databaseName);
         PreparedStatement selectStatement = selectConnection.prepareStatement(sqls.get("select"));
         selectStatement.setLong(1, accountId);
@@ -56,7 +56,7 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
 
     public void createLocations(List<LocationCreateReqDTO> locations, String databaseName,
                                 Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection createConnection = createConnection(databaseName);
         executeCreates(createConnection, locations, null);
         createConnection.close();
@@ -65,7 +65,7 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
 
     public void deleteLocations(List<Long> locationIds, String databaseName,
                                 Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         deleteRows(databaseName,
                 "locations",
                 locationIds);
@@ -74,7 +74,7 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
 
     public void updateLocations(List<LocationUpdateReqDTO> locations, String databaseName,
                                 Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection updateConnection = createConnection(databaseName);
         executeUpdates(updateConnection, locations);
         updateConnection.close();

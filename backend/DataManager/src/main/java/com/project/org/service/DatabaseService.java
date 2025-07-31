@@ -34,7 +34,7 @@ public class DatabaseService extends SqlService{
             String databaseName = reqDTO.getName().toLowerCase();
             String createSql = String.format("CREATE DATABASE %s", databaseName);
             try {
-                verifyDatabase(databaseName);
+                verifyDatabase(databaseName, true);
             } catch (DatabaseNotFoundException e) {
                 Statement createStatement = createConnection.createStatement();
                 createStatement.execute(createSql);
@@ -52,7 +52,7 @@ public class DatabaseService extends SqlService{
         for (String databaseName : databaseNames) {
             String deleteSql = String.format("DROP DATABASE %s", databaseName.toLowerCase());
             databaseName = databaseName.toLowerCase();
-            verifyDatabase(databaseName);
+            verifyDatabase(databaseName, true);
             Statement deleteStatement = connection.createStatement();
             deleteStatement.execute(deleteSql);
             deleteStatement.close();
@@ -68,8 +68,8 @@ public class DatabaseService extends SqlService{
             String oldName = reqDTO.getOldName().toLowerCase();
             String newName = reqDTO.getNewName().toLowerCase();
             String renameSql = String.format("ALTER DATABASE %s RENAME TO %s", oldName, newName);
-            verifyDatabase(oldName);
-            verifyDatabase(newName);
+            verifyDatabase(oldName, true);
+            verifyDatabase(newName, false);
             Statement alterStatement = renameConnection.createStatement();
             alterStatement.execute(renameSql);
             alterStatement.close();

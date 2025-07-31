@@ -34,7 +34,7 @@ public class PolicyService extends DataService<DefaultPolicyResDTO> {
                                                  String databaseName,
                                                  Long accountId,
                                                  String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection selectConnection = createConnection(databaseName);
         PreparedStatement selectStatement = selectConnection.prepareStatement(sqls.get("select"));
         selectStatement.setLong(1, accountId);
@@ -57,7 +57,7 @@ public class PolicyService extends DataService<DefaultPolicyResDTO> {
 
     public void createPolicy(List<PolicyCreateReqDTO> policies, String databaseName,
                              Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Long ownerId = jwtService.extractUserId(jwt);
         Connection createConnection = createConnection(databaseName);
         executeCreates(createConnection, policies, ownerId);
@@ -67,14 +67,14 @@ public class PolicyService extends DataService<DefaultPolicyResDTO> {
 
     public void deletePolicy(List<Long> policyIds, String databaseName,
                              Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         deleteRows(databaseName, "policies", policyIds);
         finishJob(jobId, jwt);
     }
 
     public void updatePolicy(List<PolicyUpdateReqDTO> policies, String databaseName,
                              Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
-        verifyDatabase(databaseName);
+        verifyDatabase(databaseName, true);
         Connection updateConnection = createConnection(databaseName);
         executeUpdates(updateConnection, policies);
         updateConnection.close();

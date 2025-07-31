@@ -24,13 +24,14 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class LocationService extends DataService {
 
+
     @Autowired
     public LocationService(RestTemplate restTemplate,
                            JwtService jwtService,
                            JobService jobService,
                            UserRepository userRepository,
-                           DatabaseRepository databaseRepository) {
-        super(restTemplate, jwtService, userRepository, databaseRepository, jobService,
+                           DatabaseRepository databaseRepository, DataManagerClientService dataManagerClientService) {
+        super(restTemplate, jwtService, userRepository, databaseRepository, jobService, dataManagerClientService,
                 "http://localhost:19000/locations");
     }
 
@@ -48,7 +49,7 @@ public class LocationService extends DataService {
                 .queryParam("accountId", accountId)
                 .build()
                 .toUri();
-        return sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
+        return dataManagerClientService.sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
                 new ParameterizedTypeReference<PagedResponse<DefaultLocationResDTO>>() {}).get();
     }
 
@@ -63,7 +64,7 @@ public class LocationService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.POST, url, locations, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.POST, url, locations, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -79,7 +80,7 @@ public class LocationService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.PUT, url, locations, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.PUT, url, locations, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -92,7 +93,7 @@ public class LocationService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.DELETE, url, locationIds, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.DELETE, url, locationIds, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 }

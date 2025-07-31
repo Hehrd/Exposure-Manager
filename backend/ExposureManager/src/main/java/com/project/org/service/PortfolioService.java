@@ -24,16 +24,19 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class PortfolioService extends DataService {
 
+    private final DataManagerClientService dataManagerClientService;
+
     @Autowired
-    public PortfolioService(RestTemplate restTemplate,
-                            JwtService jwtService,
-                            UserRepository userRepository, DatabaseRepository databaseRepository, JobService jobService) {
+    public PortfolioService(RestTemplate restTemplate, JwtService jwtService, UserRepository userRepository,
+                            DatabaseRepository databaseRepository, JobService jobService,
+                            DataManagerClientService dataManagerClientService) {
         super(restTemplate,
                 jwtService,
                 userRepository,
                 databaseRepository,
                 jobService,
-                "http://localhost:19000/portfolios");
+                dataManagerClientService,
+                "http://localhost:19000/portfolios"); this.dataManagerClientService = dataManagerClientService;
     }
 
     public ResponseEntity<PagedResponse<DefaultPortfolioResDTO>> getPortfolios(int page,
@@ -49,7 +52,7 @@ public class PortfolioService extends DataService {
                 .queryParam("databaseName", databaseName)
                 .build()
                 .toUri();
-        return sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
+        return dataManagerClientService.sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
                 new ParameterizedTypeReference<PagedResponse<DefaultPortfolioResDTO>>() {}).get();
     }
 
@@ -64,7 +67,7 @@ public class PortfolioService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.POST, url, portfolios, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.POST, url, portfolios, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -80,7 +83,7 @@ public class PortfolioService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.PUT, url, portfolios, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.PUT, url, portfolios, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -94,7 +97,7 @@ public class PortfolioService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.DELETE, url, portfolioIds, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.DELETE, url, portfolioIds, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 }

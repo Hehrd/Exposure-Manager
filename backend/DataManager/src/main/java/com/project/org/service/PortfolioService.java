@@ -53,7 +53,7 @@ public class PortfolioService extends DataService<DefaultPortfolioResDTO> {
     }
 
     public void createPortfolios(List<PortfolioCreateReqDTO> portfolios, String databaseName,
-                                 Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
+                                 Long jobId, String jwt) throws SQLException, DatabaseNotFoundException, InterruptedException {
         verifyDatabase(databaseName);
         Long ownerId = jwtService.extractUserId(jwt);
         Connection createConnection = createConnection(databaseName);

@@ -28,17 +28,20 @@ public abstract class DataService {
     protected final UserRepository userRepository;
     protected final DatabaseRepository databaseRepository;
     protected final JobService jobService;
+    protected final DataManagerClientService dataManagerClientService;
 
     public DataService(RestTemplate restTemplate, JwtService jwtService,
                        UserRepository userRepository,
                        DatabaseRepository databaseRepository,
                        JobService jobService,
+                       DataManagerClientService dataManagerClientService,
                        String dataManagerURL) {
         this.restTemplate = restTemplate;
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.databaseRepository = databaseRepository;
         this.jobService = jobService;
+        this.dataManagerClientService = dataManagerClientService;
         this.DATA_MANAGER_URL = dataManagerURL;
     }
 
@@ -50,24 +53,6 @@ public abstract class DataService {
         return userEntity;
     }
 
-    @Async
-    protected <T, P> CompletableFuture<ResponseEntity<P>> sendReqToDatamanager(HttpMethod httpMethod,
-                                                                               URI url,
-                                                                               T payload,
-                                                                               String jwt,
-                                                                               ParameterizedTypeReference<P> responseClass) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            String userIdCookie = String.format("access_token=%s", jwt);
-            headers.add(HttpHeaders.COOKIE, userIdCookie);
-            HttpEntity<T> entity = new HttpEntity<>(payload, headers);
-            ResponseEntity<P> res = restTemplate.exchange(url, httpMethod, entity, responseClass);
-            return CompletableFuture.completedFuture(res);
-        } catch (Exception e) {
-            return CompletableFuture.failedFuture(e);
-        }
-
-    }
 
     protected void validateRole(Role role, String databaseName) throws InsufficientPrivilegeForDatabaseException, NotFoundException {
         DatabaseEntity databaseEntity = databaseRepository.findByName(databaseName)

@@ -24,13 +24,14 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class PolicyService extends DataService {
 
+
     @Autowired
     public PolicyService(RestTemplate restTemplate,
                          JwtService jwtService,
                          JobService jobService,
-                         UserRepository userRepository, DatabaseRepository databaseRepository) {
+                         UserRepository userRepository, DatabaseRepository databaseRepository, DataManagerClientService dataManagerClientService) {
         super(restTemplate, jwtService, userRepository, databaseRepository,
-                jobService,
+                jobService, dataManagerClientService,
                 "http://localhost:19000/policies");
     }
 
@@ -48,7 +49,7 @@ public class PolicyService extends DataService {
                 .queryParam("accountId", accountId)
                 .build()
                 .toUri();
-        return sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
+        return dataManagerClientService.sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
                 new ParameterizedTypeReference<PagedResponse<DefaultPolicyResDTO>>() {}).get();
     }
 
@@ -63,7 +64,7 @@ public class PolicyService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.POST, url, policies, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.POST, url, policies, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -79,7 +80,7 @@ public class PolicyService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.PUT, url, policies, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.PUT, url, policies, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -94,7 +95,7 @@ public class PolicyService extends DataService {
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.DELETE, url, policyIds, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.DELETE, url, policyIds, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 }

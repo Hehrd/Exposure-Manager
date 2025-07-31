@@ -11,6 +11,4 @@ public class UserLoginReqDTO {
     private String username;
     @NotBlank
     private String password;
-    @NotNull
-    private Role role;
 }

@@ -30,8 +30,11 @@ public class AccountService extends DataService{
     public AccountService(RestTemplate restTemplate,
                           JwtService jwtService,
                           UserRepository userRepository,
-                          DatabaseRepository databaseRepository, JobService jobService) {
-        super(restTemplate, jwtService, userRepository, databaseRepository, jobService, "http://localhost:19000/accounts");
+                          DatabaseRepository databaseRepository,
+                          JobService jobService,
+                          DataManagerClientService dataManagerClientService) {
+        super(restTemplate, jwtService, userRepository, databaseRepository, jobService, dataManagerClientService,
+                "http://localhost:19000/accounts");
     }
 
     public ResponseEntity<PagedResponse<DefaultAccountResDTO>> getAccounts(int page,
@@ -49,7 +52,7 @@ public class AccountService extends DataService{
                 .build()
                 .toUri();
         CompletableFuture<ResponseEntity<PagedResponse<DefaultAccountResDTO>>> future =
-                sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
+                dataManagerClientService.sendReqToDatamanager(HttpMethod.GET, url, null, jwt,
                 new ParameterizedTypeReference<PagedResponse<DefaultAccountResDTO>>() {});
         return future.get();
     }
@@ -66,7 +69,7 @@ public class AccountService extends DataService{
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.POST, url, accounts, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.POST, url, accounts, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -81,7 +84,7 @@ public class AccountService extends DataService{
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.PUT, url, accounts, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.PUT, url, accounts, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 
@@ -96,7 +99,7 @@ public class AccountService extends DataService{
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        sendReqToDatamanager(HttpMethod.DELETE, url, accountIds, jwt,
+        dataManagerClientService.sendReqToDatamanager(HttpMethod.DELETE, url, accountIds, jwt,
                 new ParameterizedTypeReference<Void>() {});
     }
 

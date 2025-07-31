@@ -32,17 +32,19 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 public class DatabaseService extends DataService{
+
     @Autowired
     public DatabaseService(RestTemplate restTemplate,
                            JwtService jwtService,
                            JobService jobService,
                            UserRepository userRepository,
-                           DatabaseRepository databaseRepository) {
+                           DatabaseRepository databaseRepository, DataManagerClientService dataManagerClientService) {
         super(restTemplate,
                 jwtService,
                 userRepository,
                 databaseRepository,
                 jobService,
+                dataManagerClientService,
                 "http://localhost:19000/databases");
     }
 
@@ -76,7 +78,7 @@ public class DatabaseService extends DataService{
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        CompletableFuture<ResponseEntity<Void>> future = sendReqToDatamanager(HttpMethod.POST, url, reqDTOs, jwt,
+        CompletableFuture<ResponseEntity<Void>> future = dataManagerClientService.sendReqToDatamanager(HttpMethod.POST, url, reqDTOs, jwt,
                 new ParameterizedTypeReference<Void>() {});
         future.thenAccept(res -> {
             if (res.getStatusCode().value() == HttpStatus.CREATED.value()) {
@@ -94,7 +96,7 @@ public class DatabaseService extends DataService{
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        CompletableFuture<ResponseEntity<Void>> future = sendReqToDatamanager(HttpMethod.DELETE, url,
+        CompletableFuture<ResponseEntity<Void>> future = dataManagerClientService.sendReqToDatamanager(HttpMethod.DELETE, url,
                 databaseNames,
                 jwt,
                 new ParameterizedTypeReference<Void>() {});
@@ -121,7 +123,7 @@ public class DatabaseService extends DataService{
                 .queryParam("jobId", jobId)
                 .build()
                 .toUri();
-        CompletableFuture<ResponseEntity<Void>> future = sendReqToDatamanager(HttpMethod.PUT,
+        CompletableFuture<ResponseEntity<Void>> future = dataManagerClientService.sendReqToDatamanager(HttpMethod.PUT,
                 url,
                 reqDTOs,
                 jwt,

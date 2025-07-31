@@ -41,7 +41,7 @@ public class PortfolioController {
     public ResponseEntity<String> createPortfolios(@RequestBody List<PortfolioCreateReqDTO> reqDTOs,
                                                   @RequestParam("databaseName") String databaseName,
                                                   @RequestParam("jobId") Long jobId,
-                                                   @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+                                                   @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException, InterruptedException {
         portfolioService.createPortfolios(reqDTOs, databaseName, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.CREATED)

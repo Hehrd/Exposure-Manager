@@ -21,27 +21,34 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function JobsPage() {
   const { displayType } = useContext(ThemeContext);
-  // ---- allow null on the ref ----
   const gridRef = useRef<AgGridReact<DefaultJobResDTO> | null>(null);
 
   // Column definitions matching your DTO
   const [colDefs] = React.useState<ColDef<DefaultJobResDTO, any>[]>([
     { field: "name", headerName: "Job Name", flex: 1, filter: true },
     {
-      field: "timeStarted",      // ← matches your DTO
+      field: "timeStartedMillis",
       headerName: "Started",
       flex: 1,
       filter: "agDateColumnFilter",
       valueFormatter: ({ value }) =>
-        value ? new Date(value).toLocaleString() : "",
+        value != null
+          ? new Date(value).toLocaleString()
+          : "——",
+      cellStyle: ({ value }) =>
+        value == null ? { textAlign: "center" } : undefined,
     },
     {
-      field: "timeFinished",     // ← matches your DTO
+      field: "timeFinishedMillis",
       headerName: "Finished",
       flex: 1,
       filter: "agDateColumnFilter",
       valueFormatter: ({ value }) =>
-        value ? new Date(value).toLocaleString() : "",
+        value != null
+          ? new Date(value).toLocaleString()
+          : "——",
+      cellStyle: ({ value }) =>
+        value == null ? { textAlign: "center" } : undefined,
     },
     { field: "status", headerName: "Status", flex: 1, filter: true },
   ]);
@@ -62,20 +69,26 @@ export default function JobsPage() {
       const size = endRow! - startRow!;
 
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/jobs?page=${page}&size=${size}`,
-          { credentials: "include" }
-        );
+        const url = `${import.meta.env.VITE_BACKEND_URL}/jobs?page=${page}&size=${size}`;
+        const res = await fetch(url, { credentials: "include" });
+
+        console.log("[JobsPage] fetch URL:", url);
+        console.log("[JobsPage] raw response:", res);
 
         if (!res.ok) {
-          console.error("[JobsPage] fetch error:", res.status);
+          console.error("[JobsPage] fetch error status:", res.status);
           params.fail();
           return;
         }
 
         const payload = await res.json();
+        console.log("[JobsPage] parsed payload:", payload);
+
+        // Map raw DTO fields to your grid columns
+        const rowData = payload.content.map((job: DefaultJobResDTO) => job);
+
         params.success({
-          rowData: payload.content,
+          rowData,
           rowCount: payload.totalElements,
         });
       } catch (err) {
@@ -91,7 +104,7 @@ export default function JobsPage() {
 
   return (
     <AppWrapper>
-      <div className="p-2 bg-white border-b border-gray-200 flex items-center">
+      <div className="p-2 bg-[var(--bg-color)] border-b border-gray-200 flex items-center">
         <button
           onClick={handleRefresh}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

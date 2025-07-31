@@ -6,7 +6,7 @@ export interface LocationRow {
   address: string;
   country: string;
   city: string;
-  zip: string;
+  zip: number;
   accountId?: number;
   _isNew?: boolean;
   _isDeleted?: boolean;
@@ -14,5 +14,5 @@ export interface LocationRow {
   _originalAddress?: string;
   _originalCountry?: string;
   _originalCity?: string;
-  _originalZip?: string;
+  _originalZip?: number;
 }

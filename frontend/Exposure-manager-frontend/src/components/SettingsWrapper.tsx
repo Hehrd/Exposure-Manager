@@ -31,6 +31,7 @@ export default function SettingsWrapper({ children }: SettingsWrapperProps) {
           <nav className="flex flex-col gap-2">
             <Link
               to="/settings/appearance"
+              replace
               className={`hover:underline ${
                 isActive('/settings/appearance')
                   ? 'font-bold text-[var(--primary-color)] underline'
@@ -41,6 +42,7 @@ export default function SettingsWrapper({ children }: SettingsWrapperProps) {
             </Link>
             <Link
               to="/settings/account"
+              replace
               className={`hover:underline ${
                 isActive('/settings/account')
                   ? 'font-bold text-[var(--primary-color)] underline'

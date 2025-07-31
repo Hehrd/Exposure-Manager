@@ -177,7 +177,7 @@ const PortfolioPage: React.FC = () => {
   return (
     <AppWrapper>
       <div className="flex flex-col h-[97vh]">
-        <div className="p-2 bg-white">
+        <div className="p-2 bg-[var(--bg-color)]">
           <TableToolbar
             tableName="Portfolios"
             onSave={handleSave}

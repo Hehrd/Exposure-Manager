@@ -32,8 +32,25 @@ const LocationPage: React.FC = () => {
     { field: "address", headerName: "Address",       flex: 2, editable: true, cellClassRules },
     { field: "country", headerName: "Country",       flex: 1, editable: true, cellClassRules },
     { field: "city",    headerName: "City",          flex: 1, editable: true, cellClassRules },
-    { field: "zip",     headerName: "Zip Code",      flex: 1, editable: true, cellClassRules },
+    {
+      field: "zip",
+      headerName: "Zip Code",
+      flex: 1,
+      editable: true,
+      filter: 'agNumberColumnFilter',      // <-- switch filter to number
+      cellEditor: 'agNumericCellEditor',   // <-- use numeric editor
+      valueParser: params => {
+        // parse any edit back into a number, reject non‐numeric
+        const parsed = parseInt(params.newValue, 10);
+        return isNaN(parsed) ? params.oldValue : parsed;
+      },
+      valueFormatter: params =>
+        // render the number as a string in the cell so you don’t see “123” vs 123
+        params.value != null ? String(params.value) : '',
+      cellClassRules,
+    },
   ]);
+
 
   const defaultColDef = useMemo<ColDef<LocationRow>>(() => ({
     filter: true,

@@ -3,8 +3,8 @@ export interface PolicyRow {
   id?: number;
   tempId?: string;
   name: string;
-  startDate: string;       // YYYY-MM-DD
-  expirationDate: string;  // YYYY-MM-DD
+  startDate: Date;
+  expirationDate: Date;
   coverage: number;
   perilType: string;
   accountId?: number;

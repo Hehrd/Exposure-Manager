@@ -28,19 +28,89 @@ const PolicyPage: React.FC = () => {
   const cellClassRules = { "text-red-600 dark:text-red-400": "data._isNew" };
 
   const [colDefs] = React.useState<ColDef<PolicyRow>[]>([
-    { field: "name",             headerName: "Policy Name",     flex: 2, editable: true, cellClassRules },
-    { field: "startDate",        headerName: "Start Date",      flex: 1, editable: true, cellClassRules },
-    { field: "expirationDate",   headerName: "Expiration Date", flex: 1, editable: true, cellClassRules },
+    { 
+      field: "name", 
+      headerName: "Policy Name", 
+      flex: 2, 
+      editable: true, 
+      cellClassRules 
+    },
+
+    // --- DATE COLUMNS ---
+    {
+    field: "startDate",
+    headerName: "Start Date",
+    flex: 1,
+    editable: true,
+    filter: "agDateColumnFilter",      // date filter
+    cellEditor: "agDateCellEditor",    // HTML5 date picker
+    cellEditorParams: {
+      useBrowserDatePicker: true,      // ensure native picker
+    },
+    // when editing: parse the "YYYY-MM-DD" back into a Date
+    valueParser: params => {
+      const d = new Date(params.newValue);
+      return isNaN(d.getTime()) ? params.oldValue : d;
+    },
+    // always show YYYY-MM-DD
+    valueFormatter: params =>
+      params.value instanceof Date
+        ? params.value.toISOString().slice(0, 10)
+        : "",
+    cellClassRules,
+  },
+
+  {
+    field: "expirationDate",
+    headerName: "Expiration Date",
+    flex: 1,
+    editable: true,
+    filter: "agDateColumnFilter",
+    cellEditor: "agDateCellEditor",
+    cellEditorParams: {
+      useBrowserDatePicker: true,
+    },
+    valueParser: params => {
+      const d = new Date(params.newValue);
+      return isNaN(d.getTime()) ? params.oldValue : d;
+    },
+    valueFormatter: params =>
+      params.value instanceof Date
+        ? params.value.toISOString().slice(0, 10)
+        : "",
+    cellClassRules,
+  },
+
+    // --- NUMERIC COLUMN ---
     {
       field: "coverage",
       headerName: "Coverage $",
       flex: 1,
       editable: true,
-      valueFormatter: params => `$${Number(params.value).toLocaleString()}`,
-      cellClassRules
+      filter: "agNumberColumnFilter",    // numeric filter UI
+      cellEditor: "agNumericCellEditor", // only digits (and decimal/minus if you allow)
+      valueParser: params => {
+        // parse back into a number; reject bad input
+        const n = parseFloat(params.newValue);
+        return isNaN(n) ? params.oldValue : n;
+      },
+      valueFormatter: params =>
+        // format with commas and dollar sign
+        params.value != null
+          ? `$${(params.value as number).toLocaleString()}`
+          : "",
+      cellClassRules,
     },
-    { field: "perilType",        headerName: "Peril Type",      flex: 1, editable: true, cellClassRules },
+
+    { 
+      field: "perilType", 
+      headerName: "Peril Type", 
+      flex: 1, 
+      editable: true, 
+      cellClassRules 
+    },
   ]);
+
 
   const defaultColDef = useMemo<ColDef<PolicyRow>>(() => ({
     filter: true,
@@ -60,8 +130,8 @@ const PolicyPage: React.FC = () => {
       if (created.current.length) {
         const payload = created.current.map(r => ({
           name: r.name,
-          startDate: r.startDate,
-          expirationDate: r.expirationDate,
+          startDate: (r.startDate as Date).toISOString().slice(0, 10),
+          expirationDate: (r.expirationDate as Date).toISOString().slice(0, 10),
           coverage: r.coverage,
           perilType: r.perilType,
           accountId: Number(accountId),
@@ -80,8 +150,8 @@ const PolicyPage: React.FC = () => {
         const payload = updated.current.map(r => ({
           id: r.id,
           name: r.name,
-          startDate: r.startDate,
-          expirationDate: r.expirationDate,
+          startDate: (r.startDate as Date).toISOString().slice(0, 10),
+          expirationDate: (r.expirationDate as Date).toISOString().slice(0, 10),
           coverage: r.coverage,
           perilType: r.perilType,
           accountId: Number(accountId),
@@ -152,14 +222,14 @@ const PolicyPage: React.FC = () => {
         id: p.id,
         tempId: undefined,
         name: p.name,
-        startDate: p.startDate,
-        expirationDate: p.expirationDate,
+        startDate: new Date(p.startDate),        
+        expirationDate: new Date(p.expirationDate),
         coverage: p.coverage,
         perilType: p.perilType,
         accountId: Number(accountId),
         _originalName: p.name,
-        _originalStartDate: p.startDate,
-        _originalExpirationDate: p.expirationDate,
+        _originalStartDate: new Date(p.startDate),
+        _originalExpirationDate: new Date(p.expirationDate),
         _originalCoverage: p.coverage,
         _originalPerilType: p.perilType,
         _isNew: false,

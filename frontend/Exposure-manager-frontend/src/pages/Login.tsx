@@ -14,7 +14,9 @@ export default function Login() {
     try {
       await login(username, password);
       toast.success('Logged in successfully');
-      navigate('/');
+      setTimeout(() => {
+        navigate('/');
+      }, 100);
     } catch {
       toast.error('Login failed. Check your credentials.');
     }

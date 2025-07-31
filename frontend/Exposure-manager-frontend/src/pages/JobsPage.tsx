@@ -4,18 +4,16 @@ import { AgGridReact } from "ag-grid-react";
 import {
   ModuleRegistry,
   AllCommunityModule,
-  
 } from "ag-grid-community";
 import type {
   ColDef,
   IServerSideDatasource,
-  IServerSideGetRowsParams
-} from "ag-grid-community"
+  IServerSideGetRowsParams,
+} from "ag-grid-community";
 import "ag-grid-enterprise";
 
-import AppWrapper from '../components/AppWrapper';
+import AppWrapper from "../components/AppWrapper";
 import { ThemeContext } from "../context/ThemeContext";
-
 import type { DefaultJobResDTO } from "../types/JobRow";
 
 // Register the community modules once per app lifetime
@@ -27,24 +25,30 @@ export default function JobsPage() {
 
   // Column definitions matching your DTO
   const [colDefs] = React.useState<ColDef<DefaultJobResDTO>[]>([
-    { field: "name",        headerName: "Job Name", flex: 1, filter: true },
+    { field: "name", headerName: "Job Name", flex: 1, filter: true },
     {
-      field: "timeStarted",
+      field: "timeStartedMillis",
       headerName: "Started",
       flex: 1,
       filter: "agDateColumnFilter",
-      valueFormatter: p =>
-        p.value ? new Date(p.value).toLocaleString() : "",
+      valueFormatter: (params) => {
+        const v = params.value;
+        const ms = typeof v === "number" ? v : parseInt(v, 10);
+        return !isNaN(ms) ? new Date(ms).toLocaleString() : "";
+      },
     },
     {
-      field: "timeFinished",
+      field: "timeFinishedMillis",
       headerName: "Finished",
       flex: 1,
       filter: "agDateColumnFilter",
-      valueFormatter: p =>
-        p.value ? new Date(p.value).toLocaleString() : "",
+      valueFormatter: (params) => {
+        const v = params.value;
+        const ms = typeof v === "number" ? v : parseInt(v, 10);
+        return !isNaN(ms) ? new Date(ms).toLocaleString() : "";
+      },
     },
-    { field: "status",      headerName: "Status",   flex: 1, filter: true },
+    { field: "status", headerName: "Status", flex: 1, filter: true },
   ]);
 
   // Default properties for all columns
@@ -61,43 +65,32 @@ export default function JobsPage() {
   const serverSideDatasource: IServerSideDatasource = {
     getRows: async (params: IServerSideGetRowsParams) => {
       const { startRow, endRow } = params.request;
-      const page       = Math.floor(startRow! / (endRow! - startRow!));
-      const size       = endRow! - startRow!;
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/jobs?page=${page}&size=${size}`,
-        { credentials: "include" }
-      );
+      const page = Math.floor(startRow! / (endRow! - startRow!));
+      const size = endRow! - startRow!;
 
-      // log status + headers
-      console.log("[JobsPage] fetch status:", res.status, "ok?", res.ok);
-      res.headers.forEach((value, key) => console.log(`  ${key}: ${value}`));
-
-      let payload: any;
       try {
-        // try to parse JSON
-        payload = await res.json();
-        console.log("[JobsPage] parsed JSON payload:", payload);
-      } catch (jsonErr) {
-        // if it's not valid JSON, dump as text
-        const text = await res.text();
-        console.error("[JobsPage] failed to parse JSON, raw text:", text);
-        throw jsonErr;
-      }
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/jobs?page=${page}&size=${size}`,
+          { credentials: "include" }
+        );
 
-      if (!res.ok) {
-        console.error("[JobsPage] server responded with error:", payload);
+        if (!res.ok) {
+          console.error("[JobsPage] fetch error:", res.status);
+          params.fail();
+          return;
+        }
+
+        const payload = await res.json();
+        params.success({
+          rowData: payload.content,
+          rowCount: payload.totalElements,
+        });
+      } catch (err) {
+        console.error("[JobsPage] network or parsing error:", err);
         params.fail();
-        return;
       }
-
-      params.success({
-        rowData: payload.content,
-        rowCount: payload.totalElements,
-      });
-
     },
   };
-
 
   // Refresh function to reload from server
   const handleRefresh = () => {

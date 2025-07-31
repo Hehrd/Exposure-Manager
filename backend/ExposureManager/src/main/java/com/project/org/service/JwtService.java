@@ -1,16 +1,16 @@
 package com.project.org.service;
 
+import com.project.org.persistence.entity.enums.Role;
+import com.project.org.security.JwtUser;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.security.Key;
 import java.util.Date;
+import java.util.Map;
 
 @Service
 public class JwtService {
@@ -23,9 +23,10 @@ public class JwtService {
         this.jwtParser = jwtParser;
     }
 
-    public String createToken(String username) {
+    public String createToken(JwtUser user) {
         String jwt = Jwts.builder()
-                .subject(username)
+                .subject("userToken")
+                .claim("user", user)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 7 * 24 * 1000 * 60 * 60))
                 .signWith(SECRET_KEY)
@@ -33,13 +34,22 @@ public class JwtService {
         return jwt;
     }
 
-    public String extractUsername(String jwt) {
-        String username = jwtParser.parseSignedClaims(jwt).getPayload().getSubject();
-        return username;
+    public JwtUser extractUser(String jwt) {
+        Claims claims = jwtParser.parseSignedClaims(jwt).getPayload();
+        Map<String, Object> userMap = (Map<String, Object>) claims.get("user");
+        return getJwtUserObj(userMap);
     }
 
     public boolean isExpired(String jwt) {
         return jwtParser.parseSignedClaims(jwt).getPayload().getExpiration().before(new Date());
+    }
+
+    private JwtUser getJwtUserObj(Map<String, Object> userMap) {
+        JwtUser jwtUser = new JwtUser();
+        jwtUser.setId(Integer.toUnsignedLong((Integer) userMap.get("id")));
+        jwtUser.setUsername((String) userMap.get("username"));
+        jwtUser.setRole(Role.getRoleByText((String) userMap.get("role")));
+        return jwtUser;
     }
 
 }

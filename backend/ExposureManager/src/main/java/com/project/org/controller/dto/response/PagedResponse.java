@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class PagedResponse<T> {
     private List<T> content;
-    private int totalElements;
+    private long totalElements;
     private int pageNumber;
     private int pageSize;
 }

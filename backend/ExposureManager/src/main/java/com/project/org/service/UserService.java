@@ -3,10 +3,10 @@ package com.project.org.service;
 import com.project.org.controller.dto.request.user.UserLoginReqDTO;
 import com.project.org.controller.dto.request.user.UserSignUpReqDTO;
 import com.project.org.controller.dto.response.DefaultUserResDTO;
-import com.project.org.error.exception.NotFoundException;
 import com.project.org.persistence.entity.UserEntity;
 import com.project.org.persistence.repository.UserRepository;
 import com.project.org.security.CustomUserDetails;
+import com.project.org.security.JwtUser;
 import com.project.org.util.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,8 +14,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -46,15 +44,12 @@ public class UserService {
         Authentication auth = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(reqDTO.getUsername(), reqDTO.getPassword()));
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        return jwtService.createToken(userDetails.getUsername());
+        return jwtService.createToken(ObjectMapper.toJwtUser(userDetails));
     }
 
-    public DefaultUserResDTO me(String token) throws NotFoundException {
-        String jwtUsername = jwtService.extractUsername(token);
-        Optional<UserEntity> userEntityOptional = userRepository.findByUsername(jwtUsername);
-        UserEntity userEntity = userEntityOptional.orElseThrow(
-                () -> new NotFoundException(String.format("User with username %s not found!", jwtUsername)));
-        return ObjectMapper.toDTO(userEntity);
+    public JwtUser me(String jwt) {
+        JwtUser jwtUser = jwtService.extractUser(jwt);
+        return jwtUser;
     }
 
 

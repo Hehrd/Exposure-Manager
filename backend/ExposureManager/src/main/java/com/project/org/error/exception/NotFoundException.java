@@ -1,7 +1,9 @@
 package com.project.org.error.exception;
 
-public class NotFoundException extends Exception {
+import org.springframework.http.HttpStatus;
+
+public class NotFoundException extends ExposureManagerException {
     public NotFoundException(String message) {
-        super(message);
+        super(HttpStatus.NOT_FOUND, message);
     }
 }

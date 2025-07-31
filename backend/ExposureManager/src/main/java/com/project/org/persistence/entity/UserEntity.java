@@ -1,6 +1,6 @@
 package com.project.org.persistence.entity;
 
-import com.project.org.persistence.entity.enums.Roles;
+import com.project.org.persistence.entity.enums.Role;
 import com.project.org.persistence.entity.util.converter.RoleConverter;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -24,7 +24,7 @@ public class UserEntity {
 
     @Column(nullable = false)
     @Convert(converter = RoleConverter.class)
-    private Roles role;
+    private Role role;
 
     @OneToMany(mappedBy = "owner")
     private List<DatabaseEntity> databases;

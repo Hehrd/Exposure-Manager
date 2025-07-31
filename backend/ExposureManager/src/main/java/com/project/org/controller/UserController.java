@@ -4,6 +4,7 @@ import com.project.org.controller.dto.request.user.UserLoginReqDTO;
 import com.project.org.controller.dto.request.user.UserSignUpReqDTO;
 import com.project.org.controller.dto.response.DefaultUserResDTO;
 import com.project.org.error.exception.NotFoundException;
+import com.project.org.security.JwtUser;
 import com.project.org.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +42,11 @@ public class UserController {
 
 
     @GetMapping(value = "/me")
-    public ResponseEntity<DefaultUserResDTO> me(@CookieValue("access_token") String token) throws NotFoundException {
-        DefaultUserResDTO resDTO = userService.me(token);
+    public ResponseEntity<JwtUser> me(@CookieValue("access_token") String token) throws NotFoundException {
+        JwtUser jwtUser = userService.me(token);
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(resDTO);
+                .body(jwtUser);
     }
 
     @PostMapping(value = "/hello")

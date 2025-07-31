@@ -3,11 +3,14 @@ package com.project.org.service;
 import com.project.org.controller.dto.request.database.DatabaseCreateReqDTO;
 import com.project.org.controller.dto.request.database.DatabaseUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultDatabaseResDTO;
+import com.project.org.controller.dto.response.PagedResponse;
+import com.project.org.error.exception.InsufficientPrivilegeForDatabaseException;
 import com.project.org.error.exception.NotFoundException;
 import com.project.org.persistence.entity.DatabaseEntity;
 import com.project.org.persistence.entity.UserEntity;
 import com.project.org.persistence.repository.DatabaseRepository;
 import com.project.org.persistence.repository.UserRepository;
+import com.project.org.security.JwtUser;
 import com.project.org.util.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
@@ -17,98 +20,129 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 
 @Service
 public class DatabaseService extends DataService{
-    private final DatabaseRepository databaseRepository;
-
     @Autowired
     public DatabaseService(RestTemplate restTemplate,
                            JwtService jwtService,
-                           UserRepository userRepository, DatabaseRepository databaseRepository) {
+                           JobService jobService,
+                           UserRepository userRepository,
+                           DatabaseRepository databaseRepository) {
         super(restTemplate,
                 jwtService,
                 userRepository,
+                databaseRepository,
+                jobService,
                 "http://localhost:19000/databases");
-        this.databaseRepository = databaseRepository;
     }
 
 
-    public List<DefaultDatabaseResDTO> getDatabases(int page, int size, String jwt) {
-        String username = jwtService.extractUsername(jwt);
+    public PagedResponse<DefaultDatabaseResDTO> getDatabases(int page, int size, String jwt) throws NotFoundException {
+        JwtUser jwtUser = jwtService.extractUser(jwt);
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-        Page<DatabaseEntity> databaseEntitiesPage = databaseRepository.findAllByOwner_Username(username, pageable);
-        List<DatabaseEntity> databaseEntities = databaseEntitiesPage.getContent();
+        Page<DatabaseEntity> databaseEntityPage = databaseRepository.findAllByAllowedRolesContaining(jwtUser.getRole(), pageable);
         List<DefaultDatabaseResDTO> databaseResDTOs = new ArrayList<>();
-        for (DatabaseEntity databaseEntity : databaseEntities) {
+        for (DatabaseEntity databaseEntity : databaseEntityPage) {
             databaseResDTOs.add(ObjectMapper.toDTO(databaseEntity));
         }
-        return databaseResDTOs;
+        PagedResponse<DefaultDatabaseResDTO> pagedResponse = new PagedResponse<>();
+        pagedResponse.setContent(databaseResDTOs);
+        pagedResponse.setTotalElements(databaseEntityPage.getTotalElements());
+        pagedResponse.setPageNumber(page);
+        pagedResponse.setPageSize(size);
+        return pagedResponse;
     }
 
-    public ResponseEntity<Void> createDatabase(List<DatabaseCreateReqDTO> reqDTOs, String jwt) throws NotFoundException {
-        String username = jwtService.extractUsername(jwt);
-        UserEntity userEntity = userRepository.findByUsername(username).orElseThrow(
-                () -> new NotFoundException(String.format("User %s not found!", username)));
-        ResponseEntity<Void> res = sendReqToDatamanager(HttpMethod.POST,
-                URI.create(DATA_MANAGER_URL),
-                reqDTOs,
-                userEntity.getId(),
-                new ParameterizedTypeReference<Void>() {});
-        if (res.getStatusCode().value() == HttpStatus.CREATED.value()) {
-            saveDatabases(reqDTOs, userEntity);
+    public void createDatabase(List<DatabaseCreateReqDTO> reqDTOs, String jwt) throws NotFoundException {
+        JwtUser jwtUser = jwtService.extractUser(jwt);
+        Long userId = jwtUser.getId();
+        UserEntity userEntity = userRepository.findById(userId).orElseThrow(
+                () -> new NotFoundException(String.format("User %s not found!", jwtUser.getUsername())));
+        for (DatabaseCreateReqDTO reqDTO : reqDTOs) {
+            reqDTO.setName(reqDTO.getName().toLowerCase());
         }
-        return res;
-    }
-
-    public ResponseEntity<Void> deleteDatabaseById(List<String> databaseNames, String jwt) throws NotFoundException {
-        String username = jwtService.extractUsername(jwt);
-        Long userId = getUserId(username);
-        verifyDatabases(databaseNames, userId);
-        ResponseEntity<Void> res = sendReqToDatamanager(HttpMethod.DELETE,
-                URI.create(DATA_MANAGER_URL),
-                databaseNames,
-                null,
+        Long jobId = jobService.startJob(createJob("create_databases", System.currentTimeMillis()), jwt);
+        URI url = UriComponentsBuilder.fromUriString(DATA_MANAGER_URL)
+                .queryParam("jobId", jobId)
+                .build()
+                .toUri();
+        CompletableFuture<ResponseEntity<Void>> future = sendReqToDatamanager(HttpMethod.POST, url, reqDTOs, jwt,
                 new ParameterizedTypeReference<Void>() {});
-
-        if (res.getStatusCode().value() == HttpStatus.NO_CONTENT.value()) {
-            for (String databaseName : databaseNames) {
-                databaseRepository.deleteByNameAndOwner_Id(databaseName, userId);
+        future.thenAccept(res -> {
+            if (res.getStatusCode().value() == HttpStatus.CREATED.value()) {
+                saveDatabases(reqDTOs, userEntity);
             }
-        }
-        return res;
+        });
     }
 
-    public ResponseEntity<Void> updateDatabase(List<DatabaseUpdateReqDTO> reqDTOs, String jwt) throws NotFoundException {
-        String username = jwtService.extractUsername(jwt);
-        Long userId = getUserId(username);
+    @Transactional
+    public void deleteDatabases(List<String> databaseNames, String jwt) throws NotFoundException, InsufficientPrivilegeForDatabaseException {
+        JwtUser jwtUser = jwtService.extractUser(jwt);
+        verifyDatabases(databaseNames, jwtUser);
+        Long jobId = jobService.startJob(createJob("delete_databases", System.currentTimeMillis()), jwt);
+        URI url = UriComponentsBuilder.fromUriString(DATA_MANAGER_URL)
+                .queryParam("jobId", jobId)
+                .build()
+                .toUri();
+        CompletableFuture<ResponseEntity<Void>> future = sendReqToDatamanager(HttpMethod.DELETE, url,
+                databaseNames,
+                jwt,
+                new ParameterizedTypeReference<Void>() {});
+        future.thenAccept(res -> {
+            if (res.getStatusCode().value() == HttpStatus.NO_CONTENT.value()) {
+                for (String databaseName : databaseNames) {
+                    databaseRepository.deleteByNameAndOwner_Id(databaseName, jwtUser.getId());
+                }
+            }
+        });
+    }
+
+    public void updateDatabase(List<DatabaseUpdateReqDTO> reqDTOs, String jwt) throws NotFoundException, InsufficientPrivilegeForDatabaseException {
+        JwtUser jwtUser = jwtService.extractUser(jwt);
         List<String> databaseOldNames = new ArrayList<>();
         for (DatabaseUpdateReqDTO reqDTO : reqDTOs) {
+            reqDTO.setNewName(reqDTO.getNewName().toLowerCase());
+            reqDTO.setOldName(reqDTO.getOldName().toLowerCase());
             databaseOldNames.add(reqDTO.getOldName());
         }
-        verifyDatabases(databaseOldNames, userId);
-        ResponseEntity<Void> res = sendReqToDatamanager(HttpMethod.PUT,
-                URI.create(DATA_MANAGER_URL),
+        verifyDatabases(databaseOldNames, jwtUser);
+        Long jobId = jobService.startJob(createJob("update_databases", System.currentTimeMillis()), jwt);
+        URI url = UriComponentsBuilder.fromUriString(DATA_MANAGER_URL)
+                .queryParam("jobId", jobId)
+                .build()
+                .toUri();
+        CompletableFuture<ResponseEntity<Void>> future = sendReqToDatamanager(HttpMethod.PUT,
+                url,
                 reqDTOs,
-                null,
+                jwt,
                 new ParameterizedTypeReference<Void>() {});
-        if (res.getStatusCode().value() == HttpStatus.OK.value()) {
-            updateDatabases(reqDTOs, userId);
-        }
-        return res;
+        future.thenAccept(res -> {
+            if (res.getStatusCode().value() == HttpStatus.OK.value()) {
+                try {
+                    updateDatabases(reqDTOs, jwtUser.getId());
+                } catch (NotFoundException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        });
     }
 
-    private void verifyDatabases(List<String> databaseNames, Long userId) throws NotFoundException {
+    private void verifyDatabases(List<String> databaseNames, JwtUser jwtUser) throws NotFoundException, InsufficientPrivilegeForDatabaseException {
         for (String databaseName : databaseNames) {
-            if (!databaseRepository.existsByNameAndOwner_Id(databaseName, userId)) {
+            if (!databaseRepository.existsByNameAndOwner_Id(databaseName, jwtUser.getId())) {
                 throw new NotFoundException(String.format("Database with name %s not found!", databaseName));
             }
+            validateRole(jwtUser.getRole(), databaseName);
         }
     }
 
@@ -116,6 +150,7 @@ public class DatabaseService extends DataService{
         for (DatabaseCreateReqDTO reqDTO : reqDTOs) {
             DatabaseEntity databaseEntity = ObjectMapper.toEntity(reqDTO);
             databaseEntity.setOwner(userEntity);
+            databaseEntity.setAllowedRoles(reqDTO.getAllowedRoles());
             databaseRepository.save(databaseEntity);
         }
 
@@ -127,9 +162,13 @@ public class DatabaseService extends DataService{
                     databaseRepository.findByNameAndOwner_Id(reqDTO.getOldName(), userId).orElseThrow(
                     () -> new NotFoundException(String.format("Database %s not found!", reqDTO.getOldName())));
             databaseEntity.setName(reqDTO.getNewName());
+            databaseEntity.setAllowedRoles(reqDTO.getAllowedRoles());
             databaseRepository.save(databaseEntity);
         }
     }
+
+
+
 
 
 }

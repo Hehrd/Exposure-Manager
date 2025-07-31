@@ -1,9 +1,12 @@
 package com.project.org.config;
 
+import com.project.org.security.JwtUser;
 import com.project.org.security.filter.jwt.JwtVerificationFilter;
 import com.project.org.service.CustomUserDetailsService;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Deserializer;
+import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +33,7 @@ import org.springframework.web.filter.CorsFilter;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.List;
+import java.util.Map;
 
 @EnableWebSecurity
 @Configuration
@@ -37,6 +41,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    JwtVerificationFilter jwtVerificationFilter,
+//                                                   DatabaseRolesFilter databaseRolesFilter,
                                                    CorsConfigurationSource corsConfigurationSource,
                                                    AuthenticationProvider authProvider) throws Exception {
         http.csrf(customizer -> customizer.disable())
@@ -47,19 +52,20 @@ public class SecurityConfig {
                 .authenticationProvider(authProvider)
                 .sessionManagement(customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterAfter(jwtVerificationFilter, UsernamePasswordAuthenticationFilter.class);
+//                .addFilterAfter(databaseRolesFilter, JwtVerificationFilter.class);
         return http.build();
     }
 
     @Bean
     @Primary
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        CorsConfiguration frontendConfig = new CorsConfiguration();
+        frontendConfig.setAllowedOrigins(List.of("http://localhost:5173"));
+        frontendConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        frontendConfig.setAllowedHeaders(List.of("*"));
+        frontendConfig.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/**", frontendConfig);
         return source;
     }
 
@@ -88,6 +94,9 @@ public class SecurityConfig {
 
     @Bean
     public JwtParser jwtParser(SecretKey jwtSecretKey) {
-        return Jwts.parser().verifyWith(jwtSecretKey).build();
+        return Jwts.parser()
+                .verifyWith(jwtSecretKey)
+                .json(new JacksonDeserializer<>())
+                .build();
     }
 }

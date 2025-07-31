@@ -4,6 +4,7 @@ import com.project.org.controller.dto.request.account.AccountCreateReqDTO;
 import com.project.org.controller.dto.request.account.AccountUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultAccountResDTO;
 import com.project.org.controller.dto.response.PagedResponse;
+import com.project.org.error.exception.DatabaseNotFoundException;
 import com.project.org.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,8 +29,8 @@ private final AccountService accountService;
                                                                   @RequestParam("size") int size,
                                                                   @RequestParam("databaseName") String databaseName,
                                                                   @RequestParam("portfolioId") Long portfolioId,
-                                                                  @CookieValue("ownerId") Long ownerId) throws SQLException {
-       PagedResponse<DefaultAccountResDTO> accounts = accountService.getAccounts(page, size, databaseName, portfolioId, ownerId);
+                                                                  @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+       PagedResponse<DefaultAccountResDTO> accounts = accountService.getAccounts(page, size, databaseName, portfolioId, jwt);
        return ResponseEntity
                .status(HttpStatus.OK)
                .body(accounts);
@@ -38,8 +39,9 @@ private final AccountService accountService;
     @PostMapping(value = "")
     public ResponseEntity<String> createAccounts(@RequestBody List<AccountCreateReqDTO> accounts,
                                                  @RequestParam("databaseName") String databaseName,
-                                                 @CookieValue("ownerId") Long ownerId) throws SQLException {
-        accountService.createAccounts(accounts, databaseName, ownerId);
+                                                 @RequestParam("jobId") Long jobId,
+                                                 @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+        accountService.createAccounts(accounts, databaseName, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .build();
@@ -47,8 +49,10 @@ private final AccountService accountService;
 
     @DeleteMapping("")
     public ResponseEntity<String> deleteAccounts(@RequestBody List<Long> accIds,
-                                                @RequestParam("databaseName") String databaseName) throws SQLException {
-        accountService.deleteAccount(accIds, databaseName);
+                                                 @RequestParam("jobId") Long jobId,
+                                                @RequestParam("databaseName") String databaseName,
+                                                 @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+        accountService.deleteAccount(accIds, databaseName, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
@@ -56,8 +60,10 @@ private final AccountService accountService;
 
     @PutMapping("")
     public ResponseEntity<String> updateAccounts(@RequestBody List<AccountUpdateReqDTO> accounts,
-                                                @RequestParam("databaseName") String databaseName) throws SQLException {
-        accountService.updateAccount(accounts, databaseName);
+                                                 @RequestParam("jobId") Long jobId,
+                                                @RequestParam("databaseName") String databaseName,
+                                                 @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+        accountService.updateAccount(accounts, databaseName, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .build();

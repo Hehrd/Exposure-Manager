@@ -2,24 +2,30 @@ package com.project.org.service;
 
 import com.project.org.controller.dto.request.ReqDTO;
 import com.project.org.controller.dto.response.PagedResponse;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class DataService<T> extends SqlService{
+    protected final Map<String, String> sqls;
 
-    protected DataService(String url, String user, String password) {
-        super(url, user, password);
+    protected DataService(String url, String user, String password, RestTemplate restTemplate,
+                          JwtService jwtService) {
+        super(url, user, password, restTemplate, jwtService);
+        sqls = initSqls();
     }
 
-    protected PagedResponse<T> getRows(ResultSet rs, PreparedStatement countStatement) throws SQLException {
+    protected PagedResponse<T> getRows(PreparedStatement selectStatement, PreparedStatement countStatement) throws SQLException {
         PagedResponse<T> pagedResponse = new PagedResponse<>();
+        ResultSet rs = selectStatement.executeQuery();
         while (rs.next()) {
             T row = getRow(rs);
             pagedResponse.addElement(row);
         }
-        Connection connection = rs.getStatement().getConnection();
         rs.close();
         int totalElements = getTotalElements(countStatement);
         pagedResponse.setTotalElements(totalElements);
@@ -69,4 +75,6 @@ public abstract class DataService<T> extends SqlService{
             updateStatement.close();
         }
     }
+
+    protected abstract Map<String, String> initSqls();
 }

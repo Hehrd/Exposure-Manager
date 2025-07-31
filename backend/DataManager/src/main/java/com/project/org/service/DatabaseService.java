@@ -2,7 +2,7 @@ package com.project.org.service;
 
 import com.project.org.controller.dto.request.database.DatabaseCreateReqDTO;
 import com.project.org.controller.dto.request.database.DatabaseRenameReqDTO;
-import com.project.org.controller.dto.response.DefaultDatabaseResDTO;
+import com.project.org.error.exception.DatabaseNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,57 +16,66 @@ import java.util.List;
 
 @Service
 public class DatabaseService extends SqlService{
+
     @Autowired
     public DatabaseService(@Value("${db.default.url}") String url,
-                              @Value("${db.default.user}") String user,
-                              @Value("${db.default.password}") String password) {
-        super(url, user, password);
+                           @Value("${db.default.user}") String user,
+                           @Value("${db.default.password}") String password,
+                           RestTemplate restTemplate, JwtService jwtService) {
+        super(url, user, password, restTemplate, jwtService);
     }
 
 
-    public void createDatabaseIfNotExists(List<DatabaseCreateReqDTO> reqDTOs) throws SQLException, IOException {
+
+    public void createDatabaseIfNotExists(List<DatabaseCreateReqDTO> reqDTOs, Long jobId,
+                                          String jwt) throws SQLException, IOException, DatabaseNotFoundException {
         Connection createConnection = createConnection("postgres");
         for (DatabaseCreateReqDTO reqDTO : reqDTOs) {
             String databaseName = reqDTO.getName().toLowerCase();
             String createSql = String.format("CREATE DATABASE %s", databaseName);
-            if (!doesDatabaseExist(databaseName)) {
+            try {
+                verifyDatabase(databaseName);
+            } catch (DatabaseNotFoundException e) {
                 Statement createStatement = createConnection.createStatement();
                 createStatement.execute(createSql);
                 createStatement.close();
+                initDatabase(databaseName);
             }
-            initDatabase(databaseName);}
-
+        }
         createConnection.close();
+        finishJob(jobId, jwt);
     }
 
-    public void deleteDatabase(List<String> databaseNames) throws SQLException {
+    public void deleteDatabase(List<String> databaseNames, Long jobId,
+                               String jwt) throws SQLException, DatabaseNotFoundException {
         Connection connection = createConnection("postgres");
         for (String databaseName : databaseNames) {
             String deleteSql = String.format("DROP DATABASE %s", databaseName.toLowerCase());
             databaseName = databaseName.toLowerCase();
-            if (doesDatabaseExist(databaseName)) {
-                Statement deleteStatement = connection.createStatement();
-                deleteStatement.execute(deleteSql);
-                deleteStatement.close();
-            }
+            verifyDatabase(databaseName);
+            Statement deleteStatement = connection.createStatement();
+            deleteStatement.execute(deleteSql);
+            deleteStatement.close();
         }
         connection.close();
+        finishJob(jobId, jwt);
     }
 
-    public void renameDatabase(List<DatabaseRenameReqDTO> reqDTOS) throws SQLException {
+    public void renameDatabase(List<DatabaseRenameReqDTO> reqDTOS, Long jobId,
+                               String jwt) throws SQLException, DatabaseNotFoundException {
         Connection renameConnection = createConnection("postgres");
         for (DatabaseRenameReqDTO reqDTO : reqDTOS) {
             String oldName = reqDTO.getOldName().toLowerCase();
             String newName = reqDTO.getNewName().toLowerCase();
             String renameSql = String.format("ALTER DATABASE %s RENAME TO %s", oldName, newName);
-            if (doesDatabaseExist(oldName) &&
-                    !doesDatabaseExist(newName)) {
-                Statement alterStatement = renameConnection.createStatement();
-                alterStatement.execute(renameSql);
-                alterStatement.close();
-            }
+            verifyDatabase(oldName);
+            verifyDatabase(newName);
+            Statement alterStatement = renameConnection.createStatement();
+            alterStatement.execute(renameSql);
+            alterStatement.close();
         }
         renameConnection.close();
+        finishJob(jobId, jwt);
     }
 
     private void initDatabase(String databaseName) throws SQLException, IOException {

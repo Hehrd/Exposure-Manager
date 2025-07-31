@@ -5,6 +5,7 @@ import com.project.org.controller.dto.request.policy.PolicyDeleteReqDTO;
 import com.project.org.controller.dto.request.policy.PolicyUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultPolicyResDTO;
 import com.project.org.controller.dto.response.PagedResponse;
+import com.project.org.error.exception.DatabaseNotFoundException;
 import com.project.org.service.PolicyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,9 +30,9 @@ public class PolicyController {
                                                                           @RequestParam("size") int size,
                                                                           @RequestParam("databaseName") String databaseName,
                                                                           @RequestParam("accountId") Long accountId,
-                                                                          @CookieValue("ownerId") Long ownerId) throws SQLException {
+                                                                          @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
         PagedResponse<DefaultPolicyResDTO> policies =
-                policyService.getPolicies(page, size, databaseName, accountId, ownerId);
+                policyService.getPolicies(page, size, databaseName, accountId, jwt);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(policies);
@@ -39,9 +40,10 @@ public class PolicyController {
 
     @PostMapping("")
     public ResponseEntity<Void> createPolicy(@RequestBody List<PolicyCreateReqDTO> policies,
-                                               @RequestParam("databaseName") String databaseName,
-                                               @CookieValue("ownerId") Long ownerId) throws SQLException {
-        policyService.createPolicy(policies, databaseName, ownerId);
+                                             @RequestParam("databaseName") String databaseName,
+                                             @RequestParam("jobId") Long jobId,
+                                             @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+        policyService.createPolicy(policies, databaseName, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .build();
@@ -49,9 +51,10 @@ public class PolicyController {
 
     @DeleteMapping("")
     public ResponseEntity<Void> deletePolicy(@RequestBody List<Long> policyIds,
-                                               @RequestParam("databaseName") String databaseName,
-                                               @CookieValue("ownerId") Long ownerId) throws SQLException {
-        policyService.deletePolicy(policyIds, databaseName, ownerId);
+                                             @RequestParam("databaseName") String databaseName,
+                                             @RequestParam("jobId") Long jobId,
+                                             @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+        policyService.deletePolicy(policyIds, databaseName, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
@@ -59,9 +62,10 @@ public class PolicyController {
 
     @PutMapping("")
     public ResponseEntity<Void> updatePolicy(@RequestBody List<PolicyUpdateReqDTO> policies,
-                                               @RequestParam("databaseName") String databaseName,
-                                               @CookieValue("ownerId") Long ownerId) throws SQLException {
-        policyService.updatePolicy(policies, databaseName, ownerId);
+                                             @RequestParam("databaseName") String databaseName,
+                                             @RequestParam("jobId") Long jobId,
+                                             @CookieValue("access_token") String jwt) throws SQLException, DatabaseNotFoundException {
+        policyService.updatePolicy(policies, databaseName, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .build();

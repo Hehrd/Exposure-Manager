@@ -5,81 +5,80 @@ import com.project.org.controller.dto.request.location.LocationCreateReqDTO;
 import com.project.org.controller.dto.request.location.LocationUpdateReqDTO;
 import com.project.org.controller.dto.response.DefaultLocationResDTO;
 import com.project.org.controller.dto.response.PagedResponse;
+import com.project.org.error.exception.DatabaseNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class LocationService extends DataService<DefaultLocationResDTO> {
 
     @Autowired
     public LocationService(@Value("${db.default.url}") String url,
-                          @Value("${db.default.user}") String user,
-                          @Value("${db.default.password}") String password) {
-        super(url, user, password);
+                           @Value("${db.default.user}") String user,
+                           @Value("${db.default.password}") String password,
+                           RestTemplate restTemplate, JwtService jwtService) {
+        super(url, user, password, restTemplate, jwtService);
     }
 
     public PagedResponse<DefaultLocationResDTO> getLocations(int page,
                                                              int size,
                                                              String databaseName,
                                                              Long accountId,
-                                                             Long ownerId) throws SQLException {
-        if (doesDatabaseExist(databaseName)) {
-            String whereClause = "JOIN accounts ON locations.account_id = accounts.id " +
-                    "WHERE locations.account_id = ? AND accounts.owner_id = ?";
-            String selectSql = String.format("SELECT * FROM locations %s LIMIT ? OFFSET ?", whereClause);
-            String countSql = String.format("SELECT COUNT(*) FROM locations %s", whereClause);
-            Connection selectConnection = createConnection(databaseName);
-            PreparedStatement selectStatement = selectConnection.prepareStatement(selectSql);
-            selectStatement.setLong(1, accountId);
-            selectStatement.setLong(2, ownerId);
-            selectStatement.setInt(3, size);
-            selectStatement.setInt(4, page * size);
+                                                             String jwt) throws SQLException, DatabaseNotFoundException {
+        verifyDatabase(databaseName);
+        Connection selectConnection = createConnection(databaseName);
+        PreparedStatement selectStatement = selectConnection.prepareStatement(sqls.get("select"));
+        selectStatement.setLong(1, accountId);
+        selectStatement.setInt(2, size);
+        selectStatement.setInt(3, page * size);
 
-            PreparedStatement countStatement = selectConnection.prepareStatement(countSql);
-            countStatement.setLong(1, accountId);
-            countStatement.setLong(2, ownerId);
+        PreparedStatement countStatement = selectConnection.prepareStatement(sqls.get("count"));
+        countStatement.setLong(1, accountId);
 
-            PagedResponse<DefaultLocationResDTO> pagedResponse =
-                    getRows(selectStatement.executeQuery(), countStatement);
-            pagedResponse.setPageNumber(page);
-            pagedResponse.setPageSize(size);
-            return pagedResponse;
-        }
-        return null;
+        PagedResponse<DefaultLocationResDTO> pagedResponse =
+                getRows(selectStatement, countStatement);
+        pagedResponse.setPageNumber(page);
+        pagedResponse.setPageSize(size);
 
+        selectConnection.close();
+        return pagedResponse;
     }
 
     public void createLocations(List<LocationCreateReqDTO> locations, String databaseName,
-                                Long ownerId) throws SQLException {
-        if (doesDatabaseExist(databaseName)) {
-            Connection createConnection = createConnection(databaseName);
-            executeCreates(createConnection, locations, null);
-            createConnection.close();
-        }
+                                Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
+        verifyDatabase(databaseName);
+        Connection createConnection = createConnection(databaseName);
+        executeCreates(createConnection, locations, null);
+        createConnection.close();
+        finishJob(jobId, jwt);
     }
 
     public void deleteLocations(List<Long> locationIds, String databaseName,
-                                Long ownerId) throws SQLException {
-        if (doesDatabaseExist(databaseName)) {
-            deleteRows(databaseName,
-                    "locations",
-                    locationIds);
-        }
+                                Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
+        verifyDatabase(databaseName);
+        deleteRows(databaseName,
+                "locations",
+                locationIds);
+        finishJob(jobId, jwt);
     }
 
-    public void updateLocations(List<LocationUpdateReqDTO> locations, String databaseName, Long ownerId) throws SQLException {
-        if (doesDatabaseExist(databaseName)) {
-            Connection updateConnection = createConnection(databaseName);
-            executeUpdates(updateConnection, locations);
-            updateConnection.close();
-        }
+    public void updateLocations(List<LocationUpdateReqDTO> locations, String databaseName,
+                                Long jobId, String jwt) throws SQLException, DatabaseNotFoundException {
+        verifyDatabase(databaseName);
+        Connection updateConnection = createConnection(databaseName);
+        executeUpdates(updateConnection, locations);
+        updateConnection.close();
+        finishJob(jobId, jwt);
     }
 
     @Override
@@ -98,9 +97,7 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
     @Override
     protected PreparedStatement prepareCreateStatement(Connection connection, ReqDTO reqDTO, Long ownerId) throws SQLException {
         LocationCreateReqDTO location = (LocationCreateReqDTO) reqDTO;
-        String createSql = "INSERT INTO locations (name, address, country, city, zip_code, account_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
-        PreparedStatement createStatement = connection.prepareStatement(createSql);
+        PreparedStatement createStatement = connection.prepareStatement(sqls.get("insert"));
         createStatement.setString(1, location.getName());
         createStatement.setString(2, location.getAddress());
         createStatement.setString(3, location.getCountry());
@@ -113,10 +110,7 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
     @Override
     protected PreparedStatement prepareUpdateStatement(Connection connection, ReqDTO reqDTO) throws SQLException {
         LocationUpdateReqDTO location = (LocationUpdateReqDTO) reqDTO;
-        String updateSql = "UPDATE locations " +
-                "SET name = ?, address = ?, country = ?, city = ?, zip_code = ?, account_id = ? " +
-                "WHERE id = ?";
-        PreparedStatement updateStatement = connection.prepareStatement(updateSql);
+        PreparedStatement updateStatement = connection.prepareStatement(sqls.get("update"));
         updateStatement.setString(1, location.getName());
         updateStatement.setString(2, location.getAddress());
         updateStatement.setString(3, location.getCountry());
@@ -127,7 +121,15 @@ public class LocationService extends DataService<DefaultLocationResDTO> {
         return updateStatement;
     }
 
-
+    @Override
+    protected Map<String, String> initSqls() {
+        Map<String, String> sqls = new HashMap<>();
+        sqls.put("select", "SELECT * FROM locations WHERE account_id = ? LIMIT ? OFFSET ?");
+        sqls.put("count", "SELECT COUNT(*) FROM locations WHERE account_id = ?");
+        sqls.put("insert", "INSERT INTO locations (name, address, country, city, zip_code, account_id) VALUES (?, ?, ?, ?, ?, ?)");
+        sqls.put("update", "UPDATE locations SET name = ?, address = ?, country = ?, city = ?, zip_code = ?, account_id = ? WHERE id = ?");
+        return sqls;
+    }
 
 
 }

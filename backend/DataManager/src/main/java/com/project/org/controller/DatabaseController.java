@@ -2,6 +2,7 @@ package com.project.org.controller;
 
 import com.project.org.controller.dto.request.database.DatabaseCreateReqDTO;
 import com.project.org.controller.dto.request.database.DatabaseRenameReqDTO;
+import com.project.org.error.exception.DatabaseNotFoundException;
 import com.project.org.service.DatabaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,24 +26,30 @@ public class DatabaseController {
 
 
     @PostMapping(value = "")
-    public ResponseEntity<Void> createDatabase(@RequestBody List<DatabaseCreateReqDTO> reqDTOs) throws SQLException, IOException {
-        databaseService.createDatabaseIfNotExists(reqDTOs);
+    public ResponseEntity<Void> createDatabase(@RequestBody List<DatabaseCreateReqDTO> reqDTOs,
+                                               @RequestParam("jobId") Long jobId,
+                                               @CookieValue("access_token") String jwt) throws SQLException, IOException, DatabaseNotFoundException {
+        databaseService.createDatabaseIfNotExists(reqDTOs, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .build();
     }
 
     @DeleteMapping("")
-    public ResponseEntity<String> deleteDatabase(@RequestBody List<String> databaseNames) throws SQLException, IOException {
-        databaseService.deleteDatabase(databaseNames);
+    public ResponseEntity<String> deleteDatabase(@RequestBody List<String> databaseNames,
+                                                 @RequestParam("jobId") Long jobId,
+                                                 @CookieValue("access_token") String jwt) throws SQLException, IOException, DatabaseNotFoundException {
+        databaseService.deleteDatabase(databaseNames, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
     }
 
     @PutMapping("")
-    public ResponseEntity<String> updateDatabase(@RequestBody List<DatabaseRenameReqDTO> reqDTOs) throws SQLException, IOException {
-        databaseService.renameDatabase(reqDTOs);
+    public ResponseEntity<String> updateDatabase(@RequestBody List<DatabaseRenameReqDTO> reqDTOs,
+                                                 @RequestParam("jobId") Long jobId,
+                                                 @CookieValue("access_token") String jwt) throws SQLException, IOException, DatabaseNotFoundException {
+        databaseService.renameDatabase(reqDTOs, jobId, jwt);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .build();

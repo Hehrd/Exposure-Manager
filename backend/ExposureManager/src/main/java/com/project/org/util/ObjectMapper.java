@@ -45,6 +45,7 @@ public class ObjectMapper {
         dto.setId(databaseEntity.getId());
         dto.setName(databaseEntity.getName());
         dto.setOwnerName(databaseEntity.getOwner().getUsername());
+        dto.setAllowedRoles(databaseEntity.getAllowedRoles());
         return dto;
     }
 

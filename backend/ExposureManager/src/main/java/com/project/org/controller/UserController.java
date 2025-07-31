@@ -7,11 +7,15 @@ import com.project.org.error.exception.NotFoundException;
 import com.project.org.security.JwtUser;
 import com.project.org.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Validated
 public class UserController {
     private final UserService userService;
 
@@ -21,7 +25,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/signup", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<DefaultUserResDTO> signUp(@RequestBody UserSignUpReqDTO userSignUpReqDTO) {
+    public ResponseEntity<DefaultUserResDTO> signUp(@Valid @RequestBody UserSignUpReqDTO userSignUpReqDTO) {
         DefaultUserResDTO resDTO = userService.signUp(userSignUpReqDTO);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -29,7 +33,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> login(@RequestBody UserLoginReqDTO userLoginReqDTO) {
+    public ResponseEntity<String> login(@Valid @RequestBody UserLoginReqDTO userLoginReqDTO) {
         String jwt = userService.login(userLoginReqDTO);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.SET_COOKIE, createJwtCookie(jwt).toString());
@@ -39,10 +43,8 @@ public class UserController {
                 .body("Login successful!");
     }
 
-
-
     @GetMapping(value = "/me")
-    public ResponseEntity<JwtUser> me(@CookieValue("access_token") String token) throws NotFoundException {
+    public ResponseEntity<JwtUser> me(@CookieValue("access_token") @NotBlank String token) throws NotFoundException {
         JwtUser jwtUser = userService.me(token);
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -55,12 +57,10 @@ public class UserController {
     }
 
     private ResponseCookie createJwtCookie(String jwt) {
-        ResponseCookie jwtCookie = ResponseCookie.from("access_token", jwt)
+        return ResponseCookie.from("access_token", jwt)
                 .httpOnly(true)
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60)
                 .build();
-        return jwtCookie;
     }
 }
-

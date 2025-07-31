@@ -24,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<UserEntity> userEntityOptional = userRepository.findByUsername(username);
         if (userEntityOptional.isPresent()) {
             UserEntity userEntity = userEntityOptional.get();
-            return new CustomUserDetails(username,
+            return new CustomUserDetails(userEntity.getId(), username,
                     userEntity.getPasswordHash(), userEntity.getRole());
         }
 

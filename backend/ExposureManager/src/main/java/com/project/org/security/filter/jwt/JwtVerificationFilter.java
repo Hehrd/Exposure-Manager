@@ -1,6 +1,6 @@
 package com.project.org.security.filter.jwt;
 
-import com.project.org.persistence.repository.UserRepository;
+import com.project.org.security.JwtUser;
 import com.project.org.service.CustomUserDetailsService;
 import com.project.org.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -10,14 +10,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtVerificationFilter extends JwtFilter {
@@ -40,7 +37,9 @@ public class JwtVerificationFilter extends JwtFilter {
         String token = getTokenFromRequest(request);
         if (token != null && !jwtService.isExpired(token)) {
             createAuth(token);
+            System.out.println("Before filterChain - auth: " + SecurityContextHolder.getContext().getAuthentication());
             filterChain.doFilter(request, response);
+            System.out.println("After filterChain - auth: " + SecurityContextHolder.getContext().getAuthentication());
             return;
         }
 
@@ -48,8 +47,9 @@ public class JwtVerificationFilter extends JwtFilter {
         response.getWriter().write("Missing or invalid JWT token");
     }
 
-    private void createAuth(String token) {
-        String username = jwtService.extractUsername(token);
+    private void createAuth(String jwt) {
+        JwtUser jwtUser = jwtService.extractUser(jwt);
+        String username = jwtUser.getUsername();
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         if (userDetails != null && username.equals(userDetails.getUsername())) {
             UsernamePasswordAuthenticationToken auth =

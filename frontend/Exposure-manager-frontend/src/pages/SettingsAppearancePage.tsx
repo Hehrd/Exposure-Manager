@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import { useContext } from 'react';
 import ThemeToggle from '../components/ThemeToggle';
 import SettingsWrapper from '../components/SettingsWrapper';
 import { ThemeContext } from '../context/ThemeContext';

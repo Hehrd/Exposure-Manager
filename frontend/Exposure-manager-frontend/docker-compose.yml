@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  frontend:
+    build: .
+    volumes:
+      # mount your code for live reload
+      - .:/app
+      # keep container node_modules separate from host
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    # override the default CMD if you need extra flags
+    command: npm run dev
+    environment:
+      # if you need polling for mounted volumes
+      - CHOKIDAR_USEPOLLING=true

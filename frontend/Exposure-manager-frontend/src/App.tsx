@@ -1,11 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import ThemeToggle from './components/ThemeToggle';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import TablePage from './pages/TablePage';
 import ProtectedRoute from './components/ProtectedRoute';
-import AppWrapper from './components/AppWrapper';
 import DatabasePage from './pages/DatabasePage';
 import PortfolioPage from './pages/PortfolioPage';
 import AccountPage from './pages/AccountPage';

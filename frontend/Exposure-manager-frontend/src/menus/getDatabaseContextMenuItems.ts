@@ -10,7 +10,6 @@ export const getDatabaseContextMenuItems = (
   gridApi: GridApi<DatabaseRow>,
   currentUsername: string,
   createdRef: React.RefObject<DatabaseRow[]>,
-  updatedRef: React.RefObject<DatabaseRow[]>,
   deletedRef: React.RefObject<DatabaseRow[]>
 ) => (params: GetContextMenuItemsParams<DatabaseRow>): MenuItemDef[] => {
   const d = params.node?.data;

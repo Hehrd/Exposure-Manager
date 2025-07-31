@@ -255,8 +255,7 @@ const DatabasePage: React.FC = () => {
                   gridRef.current!.api!,
                   user || "Unknown",
                   createdRef,
-                  updatedRef,
-                  deletedRef
+                  updatedRef
                 )(params)
               }
               onCellValueChanged={params => {

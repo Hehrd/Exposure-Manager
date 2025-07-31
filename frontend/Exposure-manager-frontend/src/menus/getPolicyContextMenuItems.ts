@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 export const getPolicyContextMenuItems = (
   gridApi: GridApi<PolicyRow>,
   createdRef: React.RefObject<PolicyRow[]>,
-  updatedRef: React.RefObject<PolicyRow[]>,
   deletedRef: React.RefObject<PolicyRow[]>
 ) => (params: GetContextMenuItemsParams<PolicyRow>): MenuItemDef[] => {
   const d = params.node?.data;

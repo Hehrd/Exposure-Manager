@@ -224,8 +224,7 @@ const PolicyPage: React.FC = () => {
             getPolicyContextMenuItems(
               gridRef.current!.api!,
               created,
-              updated,
-              deleted
+              updated
             )(params)
           }
           onCellValueChanged={params => {

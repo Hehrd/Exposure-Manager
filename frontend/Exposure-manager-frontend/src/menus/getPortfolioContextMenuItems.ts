@@ -7,7 +7,6 @@ export const getPortfolioContextMenuItems = (
   gridApi: GridApi<PortfolioRow>,
   currentUsername: string,
   createdRef: React.RefObject<PortfolioRow[]>,
-  updatedRef: React.RefObject<PortfolioRow[]>,
   deletedRef: React.RefObject<PortfolioRow[]>
 ) => (params: GetContextMenuItemsParams<PortfolioRow>): MenuItemDef[] => {
   const d = params.node?.data;

@@ -7,7 +7,6 @@ export const getAccountContextMenuItems = (
   gridApi: GridApi<AccountRow>,
   currentUsername: string,
   createdRef: React.RefObject<AccountRow[]>,
-  updatedRef: React.RefObject<AccountRow[]>,
   deletedRef: React.RefObject<AccountRow[]>
 ) => (params: GetContextMenuItemsParams<AccountRow>): MenuItemDef[] => {
   const d = params.node?.data;

@@ -1,6 +1,6 @@
 // src/renderers/DatabaseLinkRenderer.tsx
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { ICellRendererParams } from "ag-grid-community";
 import type { DatabaseRow } from "../types/DatabaseRow";
 

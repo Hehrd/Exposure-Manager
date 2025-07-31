@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import AppWrapper from "../components/AppWrapper";
 import LocationTable from "./LocationPage";
 import PolicyTable from "./PolicyPage";

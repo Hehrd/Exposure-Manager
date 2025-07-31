@@ -208,8 +208,7 @@ const PortfolioPage: React.FC = () => {
                   gridRef.current!.api!,
                   user!,
                   created,
-                  updated,
-                  deleted
+                  updated
                 )(params)
               }
               onCellValueChanged={params => {

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { AgGridReact } from "ag-grid-react";
 
-export function useClickOutsideToStopEditing(gridRef: React.RefObject<AgGridReact<any>>) {
+export function useClickOutsideToStopEditing(gridRef: any) {
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;

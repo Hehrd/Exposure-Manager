@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, ReactNode } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import ThemeToggle from './ThemeToggle';
 import LogoutButton from './LogoutButton';
 import gearIcon from '../assets/gear.svg'
 interface WrapperProps {

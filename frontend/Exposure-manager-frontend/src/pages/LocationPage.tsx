@@ -9,7 +9,6 @@ import TableToolbar from "../components/TableToolbar";
 import { useClickOutsideToStopEditing } from "../hooks/useClickOutsideToStopEditing";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { toast } from "react-toastify";
-import { useAuth } from "../context/AuthContext";
 import { ThemeContext } from "../context/ThemeContext";
 import type { LocationRow } from "../types/LocationRow";
 import { getLocationContextMenuItems } from "../menus/getLocationContextMenuItems";
@@ -20,7 +19,6 @@ const LocationPage: React.FC = () => {
   const { displayType } = useContext(ThemeContext);
   const gridRef = useRef<AgGridReact<LocationRow>>(null);
   const { databaseName, accountId } = useParams<{ databaseName: string; accountId: string }>();
-  const { user } = useAuth();
 
   const created = useRef<LocationRow[]>([]);
   const updated = useRef<LocationRow[]>([]);
@@ -239,9 +237,7 @@ const LocationPage: React.FC = () => {
           getContextMenuItems={params =>
             getLocationContextMenuItems(
               gridRef.current!.api!,
-              user || "Unknown",
               created,
-              updated,
               deleted
             )(params)
           }

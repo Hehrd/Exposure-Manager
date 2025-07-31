@@ -21,37 +21,31 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function JobsPage() {
   const { displayType } = useContext(ThemeContext);
-  const gridRef = useRef<AgGridReact<DefaultJobResDTO>>(null);
+  // ---- allow null on the ref ----
+  const gridRef = useRef<AgGridReact<DefaultJobResDTO> | null>(null);
 
   // Column definitions matching your DTO
-  const [colDefs] = React.useState<ColDef<DefaultJobResDTO>[]>([
+  const [colDefs] = React.useState<ColDef<DefaultJobResDTO, any>[]>([
     { field: "name", headerName: "Job Name", flex: 1, filter: true },
     {
-      field: "timeStartedMillis",
+      field: "timeStarted",      // ← matches your DTO
       headerName: "Started",
       flex: 1,
       filter: "agDateColumnFilter",
-      valueFormatter: (params) => {
-        const v = params.value;
-        const ms = typeof v === "number" ? v : parseInt(v, 10);
-        return !isNaN(ms) ? new Date(ms).toLocaleString() : "";
-      },
+      valueFormatter: ({ value }) =>
+        value ? new Date(value).toLocaleString() : "",
     },
     {
-      field: "timeFinishedMillis",
+      field: "timeFinished",     // ← matches your DTO
       headerName: "Finished",
       flex: 1,
       filter: "agDateColumnFilter",
-      valueFormatter: (params) => {
-        const v = params.value;
-        const ms = typeof v === "number" ? v : parseInt(v, 10);
-        return !isNaN(ms) ? new Date(ms).toLocaleString() : "";
-      },
+      valueFormatter: ({ value }) =>
+        value ? new Date(value).toLocaleString() : "",
     },
     { field: "status", headerName: "Status", flex: 1, filter: true },
   ]);
 
-  // Default properties for all columns
   const defaultColDef = useMemo<ColDef>(
     () => ({
       resizable: true,
@@ -61,7 +55,6 @@ export default function JobsPage() {
     []
   );
 
-  // Server-side data source: only GET
   const serverSideDatasource: IServerSideDatasource = {
     getRows: async (params: IServerSideGetRowsParams) => {
       const { startRow, endRow } = params.request;
@@ -92,14 +85,12 @@ export default function JobsPage() {
     },
   };
 
-  // Refresh function to reload from server
   const handleRefresh = () => {
     gridRef.current?.api.refreshServerSide({ purge: true });
   };
 
   return (
     <AppWrapper>
-      {/* Custom Toolbar */}
       <div className="p-2 bg-white border-b border-gray-200 flex items-center">
         <button
           onClick={handleRefresh}
@@ -109,7 +100,6 @@ export default function JobsPage() {
         </button>
       </div>
 
-      {/* AG-Grid */}
       <div className="ag-theme-quartz" style={{ width: "100%", height: "80vh" }}>
         <AgGridReact<DefaultJobResDTO>
           serverSideDatasource={serverSideDatasource}

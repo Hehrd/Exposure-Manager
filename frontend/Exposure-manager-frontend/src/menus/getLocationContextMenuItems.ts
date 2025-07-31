@@ -5,9 +5,7 @@ import { toast } from "react-toastify";
 
 export const getLocationContextMenuItems = (
   gridApi: GridApi<LocationRow>,
-  currentUsername: string,              // not used here but kept for symmetry
   createdRef: React.RefObject<LocationRow[]>,
-  updatedRef: React.RefObject<LocationRow[]>,
   deletedRef: React.RefObject<LocationRow[]>
 ) => (params: GetContextMenuItemsParams<LocationRow>): MenuItemDef[] => {
   const d = params.node?.data;

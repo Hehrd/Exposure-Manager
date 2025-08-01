@@ -20,7 +20,7 @@ export const getLocationContextMenuItems = (
       address: "",
       country: "",
       city: "",
-      zip: "",
+      zip: null,
       _isNew: true,
     };
     // add to top
